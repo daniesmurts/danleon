@@ -18,6 +18,7 @@ export const products: Product[] = [
     image: '/images/product-sipi-falls.png',
     badge: 'БЕСТСЕЛЛЕР',
     inStock: true,
+    profile: [1, 2, 3, 4, 5, 4],
   },
   {
     id: 'bugisu-aa',
@@ -35,6 +36,7 @@ export const products: Product[] = [
     weight: 250,
     image: '/images/product-bugisu.png',
     inStock: true,
+    profile: [4, 5, 2, 5, 2, 3],
   },
   {
     id: 'elgon-honey',
@@ -53,6 +55,7 @@ export const products: Product[] = [
     image: '/images/product-elgon-honey.png',
     badge: 'НОВИНКА',
     inStock: true,
+    profile: [2, 3, 2, 4, 5, 5],
   },
   {
     id: 'rwenzori-washed',
@@ -70,6 +73,7 @@ export const products: Product[] = [
     weight: 250,
     image: '/images/product-rwenzori.png',
     inStock: true,
+    profile: [1, 1, 5, 3, 3, 4],
   },
   {
     id: 'kampala-blend',
@@ -87,6 +91,7 @@ export const products: Product[] = [
     weight: 250,
     image: '/images/product-kampala.png',
     inStock: true,
+    profile: [2, 3, 3, 4, 4, 5],
   },
   {
     id: 'mount-elgon-reserve',
@@ -105,6 +110,7 @@ export const products: Product[] = [
     image: '/images/product-reserve.png',
     badge: 'ЛИМИТИРОВАННЫЙ',
     inStock: true,
+    profile: [2, 3, 4, 5, 4, 3],
   },
 ];
 

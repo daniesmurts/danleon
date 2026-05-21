@@ -15,6 +15,8 @@ export interface Product {
   image: string;
   badge?: 'НОВИНКА' | 'БЕСТСЕЛЛЕР' | 'ЛИМИТИРОВАННЫЙ';
   inStock: boolean;
+  /** Radar chart values: Горчинка, Обжарка, Кислинка, Насыщенность, Сладость, Баланс (1–5) */
+  profile: [number, number, number, number, number, number];
 }
 
 export type GrindType = 'зерно' | 'средний помол' | 'мелкий помол' | 'для турки' | 'френч-пресс' | 'эспрессо' | 'фильтр';
@@ -23,6 +25,8 @@ export interface CartItem {
   product: Product;
   quantity: number;
   grind: GrindType;
+  weight: number;
+  unitPrice: number;
 }
 
 export interface CheckoutFormData {
@@ -35,15 +39,40 @@ export interface CheckoutFormData {
   house: string;
   apartment: string;
   postalCode: string;
-  deliveryMethod: 'courier' | 'pickup' | 'cdek' | 'sdek';
+  deliveryMethod: 'courier' | 'pickup' | 'sdek';
   paymentMethod: 'card' | 'sbp' | 'cash';
   comment: string;
 }
 
+export type OrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
+
 export interface Order {
   id: string;
+  orderId: string;
+  status: OrderStatus;
   items: CartItem[];
-  total: number;
-  formData: CheckoutFormData;
+  totalPrice: number;
+  deliveryCost: number;
+  grandTotal: number;
+  customer: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+    city: string;
+    street: string;
+    house: string;
+    apartment: string;
+    postalCode: string;
+  };
+  deliveryMethod: CheckoutFormData['deliveryMethod'];
+  paymentMethod: CheckoutFormData['paymentMethod'];
+  comment: string;
+  tbank?: {
+    paymentId: string;
+    paymentUrl: string;
+    status: string;
+  };
   createdAt: string;
+  updatedAt: string;
 }

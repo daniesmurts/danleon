@@ -79,20 +79,20 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                       {item.product.name}
                     </h3>
                     <p className="text-[11px] text-espresso/50 font-body mt-0.5">
-                      {item.grind} · {item.product.weight}г
+                      {item.grind} · {item.weight}г
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <QuantitySelector
                         quantity={item.quantity}
-                        onChange={(q) => updateQuantity(item.product.id, item.grind, q)}
+                        onChange={(q) => updateQuantity(item.product.id, item.grind, item.weight, q)}
                       />
                       <span className="font-heading font-bold text-sm text-crimson">
-                        {(item.product.price * item.quantity).toLocaleString('ru-RU')} ₽
+                        {(item.unitPrice * item.quantity).toLocaleString('ru-RU')} ₽
                       </span>
                     </div>
                   </div>
                   <button
-                    onClick={() => removeItem(item.product.id, item.grind)}
+                    onClick={() => removeItem(item.product.id, item.grind, item.weight)}
                     className="self-start p-1 text-espresso/30 hover:text-crimson transition-colors"
                     aria-label={`Удалить ${item.product.name}`}
                   >

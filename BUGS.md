@@ -1,54 +1,31 @@
 # Bug Tracker
 
-Fix UI/layout issues first, then address these in order.
+All bugs resolved. ✓
 
 ---
 
 ## Critical (runtime / wrong data)
 
-- [ ] **Broken product links in cart** — `app/cart/page.tsx:117,136`
-  Links use `/product/${id}` but the route is `/catalog/${id}`. Returns 404 on click.
-
-- [ ] **Hardcoded tags in ProductCard** — `components/ui/ProductCard.tsx:51-56`
-  Every card shows "МЫТАЯ" and "СРЕДНЯЯ" regardless of the product's actual `process` and `roast`. Should use `product.process` / `product.roast`.
-
-- [ ] **Weight selection ignored when adding to cart** — `app/catalog/[id]/page.tsx:150`
-  250g / 500g / 1kg selection changes the displayed price but is never passed to `addItem`. Cart always receives the base 250g product.
-
-- [ ] **`lastName` never collected in checkout** — `app/checkout/page.tsx:185-188`
-  The "ИМЯ И ФАМИЛИЯ" field only writes into `firstName`. `lastName` has no input and always submits empty.
-
-- [ ] **Delivery label hardcoded as "СДЭК"** — `app/checkout/page.tsx:227`
-  Order summary always reads "ДОСТАВКА (СДЭК)" even when Courier or Pickup is selected.
+- [x] **Broken product links in cart** — fixed in `app/cart/page.tsx`: `/product/` → `/catalog/`
+- [x] **Hardcoded tags in ProductCard** — fixed in `components/ui/ProductCard.tsx`: now uses `product.process` / `product.roast`
+- [x] **Weight selection ignored when adding to cart** — fixed: added `weight` + `unitPrice` to `CartItem`, cart context, and all callers
+- [x] **`lastName` never collected in checkout** — fixed in checkout rewrite: separate firstName/lastName fields
+- [x] **Delivery label hardcoded as "СДЭК"** — fixed in checkout rewrite: uses `selectedDelivery.label`
 
 ---
 
 ## Logic / UX
 
-- [ ] **Hardcoded 156 ₽ discount** — `app/checkout/page.tsx:71`
-  `const discount = 156` is a dummy value subtracted from every order regardless of whether a subscription is active.
-
-- [ ] **Radar chart values hardcoded** — `app/catalog/[id]/page.tsx:234`
-  `<RadarChart values={[2, 3, 1, 5, 4, 4]} />` is the same for every product. Should be derived from the product's flavor/roast data.
-
-- [ ] **`className` prop silently dropped on `FormInput`** — `app/checkout/page.tsx:187`
-  Email field passes `className="sm:col-span-2"` but `FormInput` never applies it. The field won't span 2 columns.
-
-- [ ] **`alert()` in subscription form** — `app/page.tsx:220`
-  Uses `alert('Спасибо за подписку!')` — should use an inline success state like the contact form.
+- [x] **Hardcoded 156 ₽ discount** — removed in checkout rewrite
+- [x] **Radar chart values hardcoded** — fixed: added `profile` field to `Product` type and each product in `lib/products.ts`
+- [x] **`className` prop silently dropped on `FormInput`** — fixed in checkout rewrite: replaced `FormInput` with typed `FormField` that applies className
+- [x] **`alert()` in subscription form** — fixed in `app/page.tsx`: replaced with inline success state
 
 ---
 
 ## TypeScript / Imports
 
-- [ ] **Unused import `useMemo`** — `app/catalog/[id]/page.tsx:3`
-
-- [ ] **Unused import `products`** — `app/catalog/[id]/page.tsx:7`
-
-- [ ] **Unused import `products`** — `app/page.tsx:5`
-
-- [ ] **`FormInput` typed as `any`** — `app/checkout/page.tsx:25`
-  Loses all prop type safety.
-
-- [ ] **`deliveryMethod` type has `'cdek'` but component uses `'sdek'`** — `lib/types.ts:38`
-  Dead/inconsistent value in the union type.
+- [x] **Unused import `useMemo`** — removed from `app/catalog/[id]/page.tsx`
+- [x] **Unused import `products`** — removed from `app/catalog/[id]/page.tsx` and `app/page.tsx`
+- [x] **`FormInput` typed as `any`** — fixed in checkout rewrite: typed `FormField` component
+- [x] **`deliveryMethod` type has `'cdek'`** — removed from `lib/types.ts`

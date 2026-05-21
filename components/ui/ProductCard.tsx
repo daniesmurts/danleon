@@ -48,10 +48,10 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
-            МЫТАЯ
+            {product.process}
           </span>
           <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
-            СРЕДНЯЯ
+            {product.roast}
           </span>
         </div>
 

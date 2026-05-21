@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProductById, products } from '@/lib/products';
+import { getProductById } from '@/lib/products';
 import { useCart } from '@/lib/cart-context';
 import { GrindType } from '@/lib/types';
 
@@ -146,8 +146,8 @@ export default function ProductDetailPage() {
   const oldPrice = currentPrice * 1.2;
 
   const handleAddToCart = () => {
-    // Add logic handles adding to cart
-    addItem(product, 1, grind);
+    const weightNum = parseInt(weight);
+    addItem(product, 1, grind, weightNum, Math.round(currentPrice));
     setIsAdded(true);
     setCartOpen(true); // Open the cart drawer
     setTimeout(() => setIsAdded(false), 2000);
@@ -229,9 +229,8 @@ export default function ProductDetailPage() {
             </p>
 
             {/* Radar Chart */}
-            {/* Values: Горчинка-2, Обжарка-3, Кислинка-1, Насыщенность-5, Сладость-4, Баланс-4 */}
             <div className="mb-8 border-b border-espresso/10 pb-6">
-              <RadarChart values={[2, 3, 1, 5, 4, 4]} />
+              <RadarChart values={product.profile} />
             </div>
 
             {/* Selectors */}

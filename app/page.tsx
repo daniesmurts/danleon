@@ -1,14 +1,17 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products, getFeaturedProducts } from '@/lib/products';
+import { getFeaturedProducts } from '@/lib/products';
 import ProductCard from '@/components/ui/ProductCard';
 import SectionHeading from '@/components/ui/SectionHeading';
 import AnimatedReveal from '@/components/ui/AnimatedReveal';
 
 export default function HomePage() {
   const featured = getFeaturedProducts();
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [subscribeSuccess, setSubscribeSuccess] = useState(false);
 
   return (
     <div className="bg-white">
@@ -219,17 +222,28 @@ export default function HomePage() {
               Экономьте до 20% при подписке на регулярную доставку.
             </p>
           </div>
-          <form className="flex w-full md:w-auto gap-2" onSubmit={(e) => { e.preventDefault(); alert('Спасибо за подписку!'); }}>
-            <input 
-              type="email" 
-              placeholder="EMAIL" 
-              required
-              className="bg-white/10 border border-white/30 text-white placeholder:text-white/50 px-4 py-3 text-sm font-body focus:outline-none focus:border-white w-full md:w-64"
-            />
-            <button type="submit" className="bg-white text-crimson font-heading font-bold uppercase tracking-widest text-[10px] px-8 py-3 hover:bg-cream transition-colors whitespace-nowrap">
-              ОФОРМИТЬ
-            </button>
-          </form>
+          {subscribeSuccess ? (
+            <p className="font-heading font-bold text-white uppercase tracking-widest text-sm">
+              Спасибо! Вы подписаны.
+            </p>
+          ) : (
+            <form
+              className="flex w-full md:w-auto gap-2"
+              onSubmit={(e) => { e.preventDefault(); setSubscribeSuccess(true); setSubscribeEmail(''); }}
+            >
+              <input
+                type="email"
+                placeholder="EMAIL"
+                required
+                value={subscribeEmail}
+                onChange={(e) => setSubscribeEmail(e.target.value)}
+                className="bg-white/10 border border-white/30 text-white placeholder:text-white/50 px-4 py-3 text-sm font-body focus:outline-none focus:border-white w-full md:w-64"
+              />
+              <button type="submit" className="bg-white text-crimson font-heading font-bold uppercase tracking-widest text-[10px] px-8 py-3 hover:bg-cream transition-colors whitespace-nowrap">
+                ОФОРМИТЬ
+              </button>
+            </form>
+          )}
         </div>
       </section>
     </div>

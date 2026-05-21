@@ -109,12 +109,12 @@ export default function CartPage() {
           <div className="lg:col-span-2">
             <div className="divide-y divide-cream">
               {items.map((item, index) => (
-                <AnimatedReveal key={`${item.product.id}-${item.grind}`} delay={index * 80}>
+                <AnimatedReveal key={`${item.product.id}-${item.grind}-${item.weight}`} delay={index * 80}>
                   <div className="py-6 first:pt-0 last:pb-0">
                     <div className="flex gap-4 sm:gap-6">
                       {/* Product image */}
                       <Link
-                        href={`/product/${item.product.id}`}
+                        href={`/catalog/${item.product.id}`}
                         className="shrink-0 group"
                       >
                         <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-sm overflow-hidden bg-cream/20 border border-cream/50">
@@ -133,7 +133,7 @@ export default function CartPage() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <Link
-                              href={`/product/${item.product.id}`}
+                              href={`/catalog/${item.product.id}`}
                               className="hover:text-crimson transition-colors"
                             >
                               <h3 className="font-heading font-bold text-sm sm:text-base uppercase tracking-[0.1em] text-espresso leading-tight">
@@ -143,14 +143,14 @@ export default function CartPage() {
                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs sm:text-sm font-body text-espresso/50">
                               <span>{item.grind}</span>
                               <span className="text-espresso/20">•</span>
-                              <span>{item.product.weight} г</span>
+                              <span>{item.weight} г</span>
                             </div>
                           </div>
 
                           {/* Remove button */}
                           <button
                             type="button"
-                            onClick={() => removeItem(item.product.id, item.grind)}
+                            onClick={() => removeItem(item.product.id, item.grind, item.weight)}
                             className="shrink-0 p-1.5 rounded-sm text-espresso/30 hover:text-crimson hover:bg-crimson/5 transition-all duration-200"
                             aria-label={`Удалить ${item.product.name}`}
                           >
@@ -176,19 +176,19 @@ export default function CartPage() {
                           <QuantitySelector
                             quantity={item.quantity}
                             onChange={(qty) =>
-                              updateQuantity(item.product.id, item.grind, qty)
+                              updateQuantity(item.product.id, item.grind, item.weight, qty)
                             }
                           />
 
                           <p className="text-base sm:text-lg font-heading font-bold text-crimson whitespace-nowrap">
-                            {formatPrice(item.product.price * item.quantity)} ₽
+                            {formatPrice(item.unitPrice * item.quantity)} ₽
                           </p>
                         </div>
 
                         {/* Unit price if qty > 1 */}
                         {item.quantity > 1 && (
                           <p className="mt-1 text-xs font-body text-espresso/40 text-right">
-                            {formatPrice(item.product.price)} ₽ за шт.
+                            {formatPrice(item.unitPrice)} ₽ за шт.
                           </p>
                         )}
                       </div>
