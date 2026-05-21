@@ -25,14 +25,20 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       <Link href={`/catalog/${product.id}`} className="block flex-1 p-6">
         {/* Image Box */}
         <div className="relative aspect-[4/5] bg-[#F5F5F5] mb-6 flex items-center justify-center p-4">
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            loading={index < 3 ? 'eager' : 'lazy'}
-          />
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              loading={index < 3 ? 'eager' : 'lazy'}
+            />
+          ) : (
+            <svg className="w-16 h-16 text-espresso/15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h18M3 4.5h18M4.5 19.5h15" />
+            </svg>
+          )}
           {product.badge && (
             <div className="absolute top-3 right-3 bg-crimson text-white text-[9px] font-heading font-bold uppercase tracking-[0.1em] px-2 py-1">
               {product.badge}

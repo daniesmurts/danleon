@@ -11,6 +11,7 @@ export interface Product {
   description: string;
   longDescription: string;
   price: number;
+  subscriptionPrice?: number;
   weight: number;
   image: string;
   badge?: 'НОВИНКА' | 'БЕСТСЕЛЛЕР' | 'ЛИМИТИРОВАННЫЙ';
@@ -44,11 +45,31 @@ export interface CheckoutFormData {
   comment: string;
 }
 
+export type SubscriptionFrequency = 'biweekly' | 'monthly';
+export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  status: SubscriptionStatus;
+  productId: string;
+  productName: string;
+  productImage: string;
+  grind: GrindType;
+  weight: number;
+  frequency: SubscriptionFrequency;
+  unitPrice: number;
+  nextDeliveryDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
 
 export interface Order {
   id: string;
   orderId: string;
+  userId?: string;
   status: OrderStatus;
   items: CartItem[];
   totalPrice: number;
