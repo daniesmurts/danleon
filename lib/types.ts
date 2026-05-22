@@ -77,6 +77,37 @@ export interface Article {
   body?: unknown[];
 }
 
+export type BatchCategory = 'raw' | 'logistics' | 'processing' | 'packaging' | 'customs' | 'other';
+export type BatchStatus = 'open' | 'closed';
+
+export interface BatchItem {
+  id: string;
+  name: string;
+  unit: string;
+  category: BatchCategory;
+  qtyPlan: number;
+  qtyActual: number;
+  pricePlan: number;
+  priceActual: number;
+  costPlan: number;
+  costActual: number;
+  sellPrice: number;
+  salesRevenuePlan: number;
+  salesKg: number;
+  note: string;
+}
+
+export interface InventoryItem {
+  docId: string;
+  name: string;
+  unit: string;
+  stock: number;
+  threshold: number;
+  price: number;
+  updatedAt?: { seconds: number };
+}
+
+export type OrderSource = 'online' | 'offline';
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
 
 export interface Order {
@@ -101,6 +132,7 @@ export interface Order {
   };
   deliveryMethod: CheckoutFormData['deliveryMethod'];
   paymentMethod: CheckoutFormData['paymentMethod'];
+  source?: OrderSource;
   comment: string;
   tbank?: {
     paymentId: string;
