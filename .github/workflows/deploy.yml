@@ -56,7 +56,6 @@ jobs:
           container-name: danleon
           folder-id: ${{ secrets.YC_FOLDER_ID }}
           revision-image-url: cr.yandex/${{ secrets.YC_REGISTRY_ID }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          revision-service-account-id: ${{ secrets.YC_SA_ID }}
           revision-cores: 1
           revision-memory: 512Mb
           revision-core-fraction: 100
