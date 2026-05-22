@@ -61,7 +61,7 @@ jobs:
           revision-memory: 512Mb
           revision-core-fraction: 100
           revision-concurrency: 4
-          revision-timeout: 15s
+          revision-execution-timeout: 15s
           revision-env: |
             TBANK_TERMINAL_KEY=${{ secrets.TBANK_TERMINAL_KEY }}
             TBANK_SECRET_KEY=${{ secrets.TBANK_SECRET_KEY }}

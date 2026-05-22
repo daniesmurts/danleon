@@ -70,11 +70,14 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-cream/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs font-body text-cream/30">
-            © {new Date().getFullYear()} Данлеон. Все права защищены.
+            © {new Date().getFullYear()} Данлеон. Все права защищены. ИП Бугембе Даниел, ИНН 165510859142
           </p>
-          <p className="text-xs font-body text-cream/30">
-            Премиальный кофе из Уганды
-          </p>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center">
+            <Link href="/legal/offer" className="text-xs font-body text-cream/30 hover:text-cream/60 transition-colors">Публичная оферта</Link>
+            <Link href="/legal/privacy" className="text-xs font-body text-cream/30 hover:text-cream/60 transition-colors">Конфиденциальность</Link>
+            <Link href="/legal/terms" className="text-xs font-body text-cream/30 hover:text-cream/60 transition-colors">Пользовательское соглашение</Link>
+            <Link href="/legal/cookie" className="text-xs font-body text-cream/30 hover:text-cream/60 transition-colors">Cookie</Link>
+          </div>
         </div>
       </div>
     </footer>
