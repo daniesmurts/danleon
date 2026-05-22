@@ -1,10 +1,8 @@
 import { createClient } from 'next-sanity';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 import type { SanityImageSource } from '@sanity/image-url';
-import { dataset, apiVersion } from '@/sanity/env';
+import { projectId, dataset, apiVersion } from '@/sanity/env';
 import type { Product, Article } from './types';
-
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 
 // Guard: if projectId is not set (e.g. during Docker build without the secret),
 // keep client as null so queries return empty data instead of crashing.
@@ -12,7 +10,7 @@ export const sanityClient = projectId
   ? createClient({ projectId, dataset, apiVersion, useCdn: true })
   : null;
 
-const builder = sanityClient ? imageUrlBuilder(sanityClient) : null;
+const builder = sanityClient ? createImageUrlBuilder(sanityClient) : null;
 
 export function urlFor(source: SanityImageSource) {
   if (!builder) throw new Error('Sanity not configured');
