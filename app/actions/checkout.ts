@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { initPayment } from '@/lib/tbank';
@@ -25,7 +26,10 @@ export async function createOrder(
     return { error: 'Корзина пуста' };
   }
 
-  const totalPrice = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const cookieStore = await cookies();
+  const userId = cookieStore.get('user_session')?.value ?? null;
+
+  const totalPrice = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const deliveryCost = DELIVERY_PRICES[formData.deliveryMethod] ?? 0;
   const grandTotal = totalPrice + deliveryCost;
 
@@ -37,13 +41,14 @@ export async function createOrder(
     const orderRef = await addDoc(collection(db, 'orders'), {
       orderId,
       status: 'pending',
+      ...(userId ? { userId } : {}),
       items: items.map((item) => ({
         productId: item.product.id,
         productName: item.product.name,
-        price: item.product.price,
+        price: item.unitPrice,
         quantity: item.quantity,
         grind: item.grind,
-        weight: item.product.weight,
+        weight: item.weight,
       })),
       totalPrice,
       deliveryCost,

@@ -2,7 +2,7 @@ import { createClient } from 'next-sanity';
 import imageUrlBuilder from '@sanity/image-url';
 import type { SanityImageSource } from '@sanity/image-url';
 import { projectId, dataset, apiVersion } from '@/sanity/env';
-import type { Product } from './types';
+import type { Product, Article } from './types';
 
 export const sanityClient = createClient({
   projectId,
@@ -57,6 +57,43 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getAllProductSlugs(): Promise<string[]> {
   const results = await sanityClient.fetch<{ slug: string }[]>(
     /* groq */ `*[_type == "product"] { "slug": slug.current }`
+  );
+  return results.map((r) => r.slug);
+}
+
+// ─── Article Queries ─────────────────────────────────────────────────────────
+
+const ARTICLE_FIELDS = /* groq */ `
+  "slug": slug.current,
+  title, publishedAt, category, author, excerpt,
+  "coverImage": coverImage.asset->url
+`;
+
+export async function getAllArticles(): Promise<Article[]> {
+  return sanityClient.fetch(
+    /* groq */ `*[_type == "article"] | order(publishedAt desc) { ${ARTICLE_FIELDS} }`
+  );
+}
+
+export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  return sanityClient.fetch(
+    /* groq */ `*[_type == "article" && slug.current == $slug][0] {
+      ${ARTICLE_FIELDS},
+      body[] {
+        ...,
+        _type == "image" => {
+          ...,
+          "url": asset->url
+        }
+      }
+    }`,
+    { slug }
+  );
+}
+
+export async function getAllArticleSlugs(): Promise<string[]> {
+  const results = await sanityClient.fetch<{ slug: string }[]>(
+    /* groq */ `*[_type == "article"] { "slug": slug.current }`
   );
   return results.map((r) => r.slug);
 }

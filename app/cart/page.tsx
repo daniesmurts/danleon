@@ -141,7 +141,7 @@ export default function CartPage() {
                               </h3>
                             </Link>
                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs sm:text-sm font-body text-espresso/50">
-                              <span>{item.grind}</span>
+                              <span>Зерно</span>
                               <span className="text-espresso/20">•</span>
                               <span>{item.weight} г</span>
                             </div>

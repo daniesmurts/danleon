@@ -46,7 +46,7 @@ export interface CheckoutFormData {
 }
 
 export type SubscriptionFrequency = 'biweekly' | 'monthly';
-export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
+export type SubscriptionStatus = 'pending_payment' | 'active' | 'paused' | 'cancelled';
 
 export interface Subscription {
   id: string;
@@ -62,6 +62,19 @@ export interface Subscription {
   nextDeliveryDate: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type ArticleCategory = 'roasting' | 'brewing' | 'origin' | 'news';
+
+export interface Article {
+  slug: string;
+  title: string;
+  publishedAt: string;
+  category?: ArticleCategory;
+  author: string;
+  excerpt: string;
+  coverImage?: string;
+  body?: unknown[];
 }
 
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';

@@ -2,15 +2,7 @@
 
 import { useState } from 'react';
 import type { Product } from '@/lib/types';
-import type { GrindType } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
-
-const GRIND_OPTIONS: { value: GrindType; label: string }[] = [
-  { value: 'зерно', label: 'В ЗЕРНАХ' },
-  { value: 'френч-пресс', label: 'ФРЕНЧ-ПРЕСС' },
-  { value: 'эспрессо', label: 'ЭСПРЕССО' },
-  { value: 'фильтр', label: 'ФИЛЬТР' },
-];
 
 const WEIGHT_OPTIONS = [
   { value: '250', label: '250Г', multiplier: 1 },
@@ -20,7 +12,6 @@ const WEIGHT_OPTIONS = [
 
 export default function ProductInteractive({ product }: { product: Product }) {
   const { addItem, setCartOpen } = useCart();
-  const [grind, setGrind] = useState<GrindType>('зерно');
   const [weight, setWeight] = useState('250');
   const [isAdded, setIsAdded] = useState(false);
 
@@ -31,7 +22,7 @@ export default function ProductInteractive({ product }: { product: Product }) {
     : null;
 
   const handleAddToCart = () => {
-    addItem(product, 1, grind, parseInt(weight), currentPrice);
+    addItem(product, 1, 'зерно', parseInt(weight), currentPrice);
     setIsAdded(true);
     setCartOpen(true);
     setTimeout(() => setIsAdded(false), 2000);
@@ -78,26 +69,8 @@ export default function ProductInteractive({ product }: { product: Product }) {
         {product.description}
       </p>
 
-      {/* Grind selector */}
+      {/* Weight selector */}
       <div className="flex flex-col gap-6 mb-10">
-        <div>
-          <span className="block text-[10px] font-heading tracking-widest text-espresso/50 uppercase mb-3">ПОМОЛ</span>
-          <div className="flex flex-wrap gap-2">
-            {GRIND_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setGrind(opt.value)}
-                className={`px-4 py-3 text-[10px] font-heading font-bold uppercase tracking-widest border transition-colors ${
-                  grind === opt.value ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Weight selector */}
         <div>
           <span className="block text-[10px] font-heading tracking-widest text-espresso/50 uppercase mb-3">ВЕС (НЕТТО)</span>
           <div className="flex flex-wrap gap-2">
@@ -117,6 +90,7 @@ export default function ProductInteractive({ product }: { product: Product }) {
       </div>
 
       {/* Actions */}
+
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={handleAddToCart}

@@ -3,19 +3,21 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/lib/auth-context';
 import CartDrawer from './CartDrawer';
 import MobileMenu from './MobileMenu';
 
 const navLinks = [
   { href: '/catalog', label: 'МАГАЗИН' },
-  { href: '#subscription', label: 'ПОДПИСКА' },
+  { href: '/subscription', label: 'ПОДПИСКА' },
   { href: '/about', label: 'О НАС' },
-  { href: '#education', label: 'ОБУЧЕНИЕ' },
-  { href: '#blog', label: 'БЛОГ' },
+  { href: '/prepare', label: 'КАК ВАРИТЬ' },
+  { href: '/blog', label: 'БЛОГ' },
 ];
 
 export default function Header() {
   const { totalItems, cartOpen, setCartOpen } = useCart();
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -51,6 +53,20 @@ export default function Header() {
 
             {/* Right Side */}
             <div className="flex items-center gap-4">
+              {/* Account icon */}
+              <Link
+                href={user ? '/account' : '/account/login'}
+                className="relative p-2 text-cream/70 hover:text-cream transition-colors"
+                aria-label={user ? 'Мой аккаунт' : 'Войти'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+                {user && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-espresso" />
+                )}
+              </Link>
+
               {/* Cart Button */}
               <button
                 onClick={() => setCartOpen(true)}

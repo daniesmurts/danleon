@@ -79,7 +79,7 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
                       {item.product.name}
                     </h3>
                     <p className="text-[11px] text-espresso/50 font-body mt-0.5">
-                      {item.grind} · {item.weight}г
+                      Зерно · {item.weight}г
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <QuantitySelector
