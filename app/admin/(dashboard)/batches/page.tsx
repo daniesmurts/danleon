@@ -83,11 +83,11 @@ export default function AdminBatchesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading text-xl font-black tracking-widest text-espresso uppercase">Партии</h1>
+        <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase">Партии</h1>
         <button
           onClick={createBatch}
           disabled={creating}
-          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-widest px-4 py-2.5 hover:bg-espresso/90 transition-colors disabled:opacity-50"
+          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-espresso/90 transition-colors disabled:opacity-50"
         >
           {creating ? 'Создание...' : '+ Новая партия'}
         </button>
@@ -99,7 +99,7 @@ export default function AdminBatchesPage() {
           <button
             onClick={createBatch}
             disabled={creating}
-            className="inline-block mt-4 font-heading text-xs uppercase tracking-widest text-crimson hover:text-espresso transition-colors"
+            className="inline-block mt-4 font-heading text-xs uppercase tracking-wide text-crimson hover:text-espresso transition-colors"
           >
             Создать первую →
           </button>
@@ -109,12 +109,12 @@ export default function AdminBatchesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-cream/40 bg-[#F9F9F9]">
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Партия</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Дата</th>
-                <th className="text-right px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Затраты план</th>
-                <th className="text-right px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Затраты факт</th>
-                <th className="text-right px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Продажи план</th>
-                <th className="text-right px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Прибыль план</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Партия</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Дата</th>
+                <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Затраты план</th>
+                <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Затраты факт</th>
+                <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Продажи план</th>
+                <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Прибыль план</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -128,7 +128,7 @@ export default function AdminBatchesPage() {
                       <div className="flex items-center gap-2">
                         <span className="font-heading font-bold text-espresso text-xs tracking-wide">{batch.name as string}</span>
                         {batch.status === 'open' && (
-                          <span className="font-heading text-[8px] uppercase tracking-widest bg-green-100 text-green-700 px-1.5 py-0.5 rounded">открыта</span>
+                          <span className="font-heading text-xs uppercase tracking-wide bg-green-100 text-green-700 px-1.5 py-0.5 rounded">открыта</span>
                         )}
                       </div>
                     </td>
@@ -142,7 +142,7 @@ export default function AdminBatchesPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/batches/${batch.docId as string}`}
-                        className="font-heading text-[10px] tracking-widest uppercase text-crimson hover:text-espresso transition-colors"
+                        className="font-heading text-xs tracking-wide uppercase text-crimson hover:text-espresso transition-colors"
                       >
                         Открыть →
                       </Link>

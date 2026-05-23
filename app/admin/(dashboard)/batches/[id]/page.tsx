@@ -123,24 +123,24 @@ export default function BatchDetailPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin/batches" className="font-heading text-[10px] tracking-widest uppercase text-espresso/40 hover:text-espresso transition-colors">
+        <Link href="/admin/batches" className="font-heading text-xs tracking-wide uppercase text-espresso/40 hover:text-espresso transition-colors">
           ← Партии
         </Link>
         <span className="text-espresso/20">/</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="font-heading text-[10px] tracking-widest uppercase text-espresso bg-transparent border-b border-transparent hover:border-espresso/30 focus:border-espresso outline-none"
+          className="font-heading text-xs tracking-wide uppercase text-espresso bg-transparent border-b border-transparent hover:border-espresso/30 focus:border-espresso outline-none"
         />
       </div>
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="font-heading text-xl font-black tracking-widest text-espresso uppercase">{name}</h1>
+          <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase">{name}</h1>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as BatchStatus)}
-            className="border border-espresso/20 px-2 py-1 font-heading text-[9px] uppercase tracking-widest text-espresso bg-white focus:border-espresso outline-none"
+            className="border border-espresso/20 px-2 py-1 font-heading text-xs uppercase tracking-wide text-espresso bg-white focus:border-espresso outline-none"
           >
             <option value="open">Открыта</option>
             <option value="closed">Закрыта</option>
@@ -149,7 +149,7 @@ export default function BatchDetailPage() {
         <button
           onClick={save}
           disabled={saving}
-          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-widest px-4 py-2 hover:bg-espresso/90 disabled:opacity-50 transition-colors"
+          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2 hover:bg-espresso/90 disabled:opacity-50 transition-colors"
         >
           {saved ? '✓ Сохранено' : saving ? 'Сохранение...' : 'Сохранить'}
         </button>
@@ -160,7 +160,7 @@ export default function BatchDetailPage() {
         {CATEGORIES.map((c) => (
           <div key={c} className="flex items-center gap-1.5">
             <div className={`w-2 h-2 rounded-full ${CATEGORY_DOT[c]}`} />
-            <span className="font-heading text-[9px] uppercase tracking-widest text-espresso/50">{CATEGORY_LABEL[c]}</span>
+            <span className="font-heading text-xs uppercase tracking-wide text-espresso/50">{CATEGORY_LABEL[c]}</span>
           </div>
         ))}
       </div>
@@ -170,16 +170,16 @@ export default function BatchDetailPage() {
         <table className="text-sm min-w-[1200px] w-full">
           <thead>
             <tr className="border-b border-cream/20 bg-[#F9F9F9]">
-              <th className="px-3 py-2.5 text-left font-heading text-[10px] tracking-widest text-espresso/60 uppercase w-8" />
-              <th className="px-3 py-2.5 text-left font-heading text-[10px] tracking-widest text-espresso/60 uppercase">Наименование</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/60 uppercase w-14">Ед.</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/50 uppercase w-18">Кол план</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/70 uppercase w-18">Кол факт</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/50 uppercase w-22">Цена план</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/70 uppercase w-22">Цена факт</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/50 uppercase w-26">Стоим. план</th>
-              <th className="px-2 py-2.5 text-center font-heading text-[10px] tracking-widest text-espresso/70 uppercase w-26">Стоим. факт</th>
-              <th className="px-2 py-2.5 text-left font-heading text-[10px] tracking-widest text-espresso/60 uppercase w-36">Примечание</th>
+              <th className="px-3 py-2.5 text-left font-heading text-xs tracking-wide text-espresso/60 uppercase w-8" />
+              <th className="px-3 py-2.5 text-left font-heading text-xs tracking-wide text-espresso/60 uppercase">Наименование</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/60 uppercase w-14">Ед.</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/50 uppercase w-18">Кол план</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/70 uppercase w-18">Кол факт</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/50 uppercase w-22">Цена план</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/70 uppercase w-22">Цена факт</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/50 uppercase w-26">Стоим. план</th>
+              <th className="px-2 py-2.5 text-center font-heading text-xs tracking-wide text-espresso/70 uppercase w-26">Стоим. факт</th>
+              <th className="px-2 py-2.5 text-left font-heading text-xs tracking-wide text-espresso/60 uppercase w-36">Примечание</th>
               <th className="w-8" />
             </tr>
           </thead>
@@ -248,7 +248,7 @@ export default function BatchDetailPage() {
               <td colSpan={13} className="px-3 py-2.5">
                 <button
                   onClick={addRow}
-                  className="font-heading text-xs uppercase tracking-widest text-espresso/50 hover:text-espresso transition-colors"
+                  className="font-heading text-xs uppercase tracking-wide text-espresso/50 hover:text-espresso transition-colors"
                 >
                   + Добавить позицию
                 </button>
@@ -257,7 +257,7 @@ export default function BatchDetailPage() {
 
             {/* Totals row */}
             <tr className="border-t-2 border-espresso/20 bg-[#F9F9F9] font-heading font-bold">
-              <td colSpan={7} className="px-3 py-2.5 text-xs uppercase tracking-widest text-espresso">ИТОГО</td>
+              <td colSpan={7} className="px-3 py-2.5 text-xs uppercase tracking-wide text-espresso">ИТОГО</td>
               <td className="px-2 py-2.5 text-right text-xs text-espresso/60">{fmt(totals.costPlan)} ₽</td>
               <td className="px-2 py-2.5 text-right text-xs text-espresso">{fmt(totals.costActual)} ₽</td>
               <td colSpan={2} />
@@ -275,7 +275,7 @@ export default function BatchDetailPage() {
           { label: 'Прибыль (план)',  value: `${fmt(profitPlan)} ₽ · ${marginPlan.toFixed(1)}%`, profit: profitPlan },
         ].map(({ label, value, muted, profit }) => (
           <div key={label} className="bg-white border border-cream/40 p-4">
-            <p className="font-heading text-[9px] uppercase tracking-widest text-espresso/40 mb-1">{label}</p>
+            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">{label}</p>
             <p className={`font-heading font-black text-lg ${profit !== undefined ? (profit >= 0 ? 'text-green-600' : 'text-crimson') : muted ? 'text-espresso/50' : 'text-espresso'}`}>
               {value}
             </p>

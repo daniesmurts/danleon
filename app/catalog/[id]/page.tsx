@@ -95,32 +95,43 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
           {/* Left: image + farmer */}
           <div className="lg:col-span-7 flex flex-col gap-12">
-            <div className="relative aspect-square bg-[#F9F9F9] p-8 border border-espresso/10">
-              <Image src={product.image} alt={product.name} fill className="object-contain p-8 mix-blend-multiply" priority />
+            <div className="relative aspect-square bg-[#F9F9F9] p-8 border border-espresso/10 flex items-center justify-center">
+              {product.image ? (
+                <Image src={product.image} alt={product.name} fill className="object-contain p-8 mix-blend-multiply" priority />
+              ) : (
+                <svg className="w-24 h-24 text-espresso/10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h18M3 4.5h18M4.5 19.5h15" />
+                </svg>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6 items-start border border-espresso/10 p-6 bg-[#F9F9F9]">
-              <div className="relative w-24 h-24 flex-shrink-0 bg-espresso">
-                <Image src="/images/farmer_product.png" alt="Фермер" fill className="object-cover grayscale mix-blend-luminosity opacity-80" />
+            {/* Farmer quote — coffee only */}
+            {(!product.category || product.category === 'coffee') && (
+              <div className="flex flex-col sm:flex-row gap-6 items-start border border-espresso/10 p-6 bg-[#F9F9F9]">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-espresso">
+                  <Image src="/images/farmer_product.png" alt="Фермер" fill className="object-cover grayscale mix-blend-luminosity opacity-80" />
+                </div>
+                <div>
+                  <p className="text-xs text-espresso/80 font-body leading-relaxed mb-4">
+                    "Мы собираем ягоды для этого лота только на самом пике зрелости. Уникальный микроклимат нашей плантации придает кофе эту узнаваемую фруктовую ноту."
+                  </p>
+                  <h4 className="font-heading text-xs font-bold text-espresso uppercase tracking-widest">АБИГЕЙЛ НЬЯНДО</h4>
+                  <p className="text-[10px] font-heading text-espresso/50 uppercase tracking-widest">Владелица фермы, регион Бугису</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-espresso/80 font-body leading-relaxed mb-4">
-                  "Мы собираем ягоды для этого лота только на самом пике зрелости. Уникальный микроклимат нашей плантации придает кофе эту узнаваемую фруктовую ноту."
-                </p>
-                <h4 className="font-heading text-xs font-bold text-espresso uppercase tracking-widest">АБИГЕЙЛ НЬЯНДО</h4>
-                <p className="text-[10px] font-heading text-espresso/50 uppercase tracking-widest">Владелица фермы, регион Бугису</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Right: radar + interactive controls */}
           <div className="lg:col-span-5 flex flex-col">
-            {/* Radar chart is static per product, can stay here */}
-            <div className="mb-8 border-b border-espresso/10 pb-6">
-              <RadarChart values={product.profile} />
-            </div>
+            {/* Radar chart — coffee only */}
+            {product.profile && (
+              <div className="mb-8 border-b border-espresso/10 pb-6">
+                <RadarChart values={product.profile} />
+              </div>
+            )}
 
-            {/* Client component handles price display, grind/weight selection, add to cart */}
+            {/* Client component handles price display, weight selection, add to cart */}
             <ProductInteractive product={product} />
           </div>
         </div>

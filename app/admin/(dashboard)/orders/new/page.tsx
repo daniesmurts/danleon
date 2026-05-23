@@ -121,11 +121,11 @@ export default function NewOfflineOrderPage() {
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin" className="font-heading text-[10px] tracking-widest uppercase text-espresso/40 hover:text-espresso transition-colors">
+        <Link href="/admin" className="font-heading text-xs tracking-wide uppercase text-espresso/40 hover:text-espresso transition-colors">
           ← Все заказы
         </Link>
         <span className="text-espresso/20">/</span>
-        <span className="font-heading text-[10px] tracking-widest uppercase text-espresso">Новый офлайн заказ</span>
+        <span className="font-heading text-xs tracking-wide uppercase text-espresso">Новый офлайн заказ</span>
       </div>
 
       <h1 className="font-heading text-xl font-black tracking-widest text-espresso uppercase mb-6">Офлайн заказ</h1>
@@ -136,7 +136,7 @@ export default function NewOfflineOrderPage() {
           <h2 className="font-heading text-xs font-bold tracking-widest uppercase text-espresso">Клиент</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Имя *</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Имя *</label>
               <input
                 value={firstName} onChange={(e) => setFirstName(e.target.value)}
                 className="w-full border border-espresso/20 px-3 py-2 font-body text-sm focus:border-espresso outline-none"
@@ -144,7 +144,7 @@ export default function NewOfflineOrderPage() {
               />
             </div>
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Фамилия</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Фамилия</label>
               <input
                 value={lastName} onChange={(e) => setLastName(e.target.value)}
                 className="w-full border border-espresso/20 px-3 py-2 font-body text-sm focus:border-espresso outline-none"
@@ -154,7 +154,7 @@ export default function NewOfflineOrderPage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Телефон</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Телефон</label>
               <input
                 value={phone} onChange={(e) => setPhone(e.target.value)}
                 className="w-full border border-espresso/20 px-3 py-2 font-body text-sm focus:border-espresso outline-none"
@@ -162,7 +162,7 @@ export default function NewOfflineOrderPage() {
               />
             </div>
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Email</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Email</label>
               <input
                 value={email} onChange={(e) => setEmail(e.target.value)}
                 type="email"
@@ -179,7 +179,7 @@ export default function NewOfflineOrderPage() {
           {items.map((item, index) => (
             <div key={index} className="grid grid-cols-[1fr_80px_80px_80px_32px] gap-2 items-end">
               <div>
-                {index === 0 && <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Товар *</label>}
+                {index === 0 && <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Товар *</label>}
                 <select
                   value={item.productId}
                   onChange={(e) => updateItem(index, 'productId', e.target.value)}
@@ -192,7 +192,7 @@ export default function NewOfflineOrderPage() {
                 </select>
               </div>
               <div>
-                {index === 0 && <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Вес</label>}
+                {index === 0 && <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Вес</label>}
                 <select
                   value={item.weight}
                   onChange={(e) => updateItem(index, 'weight', Number(e.target.value))}
@@ -204,7 +204,7 @@ export default function NewOfflineOrderPage() {
                 </select>
               </div>
               <div>
-                {index === 0 && <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Кол-во</label>}
+                {index === 0 && <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Кол-во</label>}
                 <input
                   type="number" min={1} value={item.quantity}
                   onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))}
@@ -212,7 +212,7 @@ export default function NewOfflineOrderPage() {
                 />
               </div>
               <div>
-                {index === 0 && <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Цена ₽</label>}
+                {index === 0 && <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Цена ₽</label>}
                 <input
                   type="number" min={0} value={item.unitPrice}
                   onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))}
@@ -229,12 +229,12 @@ export default function NewOfflineOrderPage() {
               </div>
             </div>
           ))}
-          <button type="button" onClick={addItem} className="font-heading text-[10px] uppercase tracking-widest text-espresso/40 hover:text-espresso transition-colors">
+          <button type="button" onClick={addItem} className="font-heading text-xs uppercase tracking-wide text-espresso/40 hover:text-espresso transition-colors">
             + Добавить позицию
           </button>
 
           <div className="pt-3 border-t border-cream/30 flex justify-between items-center">
-            <span className="font-heading text-xs uppercase tracking-widest text-espresso/50">Итого</span>
+            <span className="font-heading text-xs uppercase tracking-wide text-espresso/50">Итого</span>
             <span className="font-heading font-black text-lg text-espresso">{totalPrice.toLocaleString('ru-RU')} ₽</span>
           </div>
         </div>
@@ -244,7 +244,7 @@ export default function NewOfflineOrderPage() {
           <h2 className="font-heading text-xs font-bold tracking-widest uppercase text-espresso">Оплата</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Способ оплаты</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Способ оплаты</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as 'cash' | 'card' | 'transfer')}
@@ -256,7 +256,7 @@ export default function NewOfflineOrderPage() {
               </select>
             </div>
             <div>
-              <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Статус</label>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Статус</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'paid' | 'pending')}
@@ -268,7 +268,7 @@ export default function NewOfflineOrderPage() {
             </div>
           </div>
           <div>
-            <label className="block font-heading text-[9px] uppercase tracking-widest text-espresso/50 mb-1">Комментарий</label>
+            <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Комментарий</label>
             <textarea
               value={comment} onChange={(e) => setComment(e.target.value)}
               rows={2}
@@ -288,7 +288,7 @@ export default function NewOfflineOrderPage() {
           >
             {saving ? 'Сохранение...' : 'Сохранить заказ'}
           </button>
-          <Link href="/admin" className="px-6 border border-espresso/20 font-heading text-xs uppercase tracking-widest text-espresso/50 hover:text-espresso transition-colors flex items-center">
+          <Link href="/admin" className="px-6 border border-espresso/20 font-heading text-xs uppercase tracking-wide text-espresso/50 hover:text-espresso transition-colors flex items-center">
             Отмена
           </Link>
         </div>

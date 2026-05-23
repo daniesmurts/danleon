@@ -6,6 +6,22 @@ export const productSchema = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'category',
+      title: 'Категория',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Кофе', value: 'coffee' },
+          { title: 'Еда и напитки', value: 'food' },
+          { title: 'Аксессуары', value: 'accessories' },
+          { title: 'Другое', value: 'other' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'coffee',
+      validation: (r) => r.required(),
+    }),
+    defineField({
       name: 'name',
       title: 'Название (рус)',
       type: 'string',
@@ -47,7 +63,7 @@ export const productSchema = defineType({
     }),
     defineField({
       name: 'roast',
-      title: 'Обжарка',
+      title: 'Обжарка (только для кофе)',
       type: 'string',
       options: {
         list: [
@@ -56,7 +72,6 @@ export const productSchema = defineType({
           { title: 'Тёмная', value: 'тёмная' },
         ],
       },
-      validation: (r) => r.required(),
     }),
     defineField({
       name: 'flavor',
@@ -78,14 +93,44 @@ export const productSchema = defineType({
     }),
     defineField({
       name: 'price',
-      title: 'Обычная цена (₽, за 250г)',
+      title: 'Цена 250г (₽)',
+      description: 'Для кофе — обязательно. Для товаров с вариантами — можно оставить пустым (цены задаются в вариантах).',
       type: 'number',
-      validation: (r) => r.required().positive(),
+      validation: (r) =>
+        r.custom((val, ctx) => {
+          const cat = (ctx.document as { category?: string })?.category;
+          if (!cat || cat === 'coffee') {
+            return val !== undefined && val !== null ? true : 'Обязательное поле для кофе';
+          }
+          return true;
+        }),
+    }),
+    defineField({
+      name: 'price500',
+      title: 'Цена 500г (₽)',
+      description: 'Если не заполнено — рассчитывается автоматически (×1.9 от цены 250г)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'price1000',
+      title: 'Цена 1кг (₽)',
+      description: 'Если не заполнено — рассчитывается автоматически (×3.5 от цены 250г)',
+      type: 'number',
     }),
     defineField({
       name: 'subscriptionPrice',
-      title: 'Цена по подписке (₽, за 250г)',
+      title: 'Цена по подписке 250г (₽)',
       description: 'Оставьте пустым, если скидка по подписке не предусмотрена',
+      type: 'number',
+    }),
+    defineField({
+      name: 'subscriptionPrice500',
+      title: 'Цена по подписке 500г (₽)',
+      type: 'number',
+    }),
+    defineField({
+      name: 'subscriptionPrice1000',
+      title: 'Цена по подписке 1кг (₽)',
       type: 'number',
     }),
     defineField({
@@ -93,6 +138,31 @@ export const productSchema = defineType({
       title: 'Вес (г)',
       type: 'number',
       initialValue: 250,
+    }),
+    defineField({
+      name: 'variants',
+      title: 'Варианты объёма (для не-кофейных товаров)',
+      description: 'Добавьте варианты, если у товара несколько объёмов/весов с разными ценами. Для кофе используйте поля price500/price1000.',
+      type: 'array',
+      of: [
+        {
+          type: 'object',
+          title: 'Вариант',
+          fields: [
+            defineField({ name: 'label', title: 'Подпись (напр. 100Г)', type: 'string', validation: (r) => r.required() }),
+            defineField({ name: 'grams', title: 'Граммов', type: 'number', validation: (r) => r.required().positive() }),
+            defineField({ name: 'price', title: 'Цена (₽)', type: 'number', validation: (r) => r.required().positive() }),
+            defineField({ name: 'subscriptionPrice', title: 'Цена по подписке (₽)', type: 'number' }),
+          ],
+          preview: {
+            select: { title: 'label', subtitle: 'price' },
+            prepare: ({ title, subtitle }) => ({
+              title,
+              subtitle: subtitle ? `${subtitle} ₽` : '',
+            }),
+          },
+        },
+      ],
     }),
     defineField({
       name: 'image',

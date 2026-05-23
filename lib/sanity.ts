@@ -21,8 +21,12 @@ export function urlFor(source: SanityImageSource) {
 
 const PRODUCT_FIELDS = /* groq */ `
   "id": slug.current,
-  name, nameEn, origin, region, altitude, process, roast,
-  flavor, description, longDescription, price, subscriptionPrice, weight,
+  category, name, nameEn, origin, region, altitude, process, roast,
+  flavor, description, longDescription,
+  price, price500, price1000,
+  subscriptionPrice, subscriptionPrice500, subscriptionPrice1000,
+  weight,
+  variants[]{ label, grams, price, subscriptionPrice },
   "image": image.asset->url,
   badge, inStock,
   "profile": [

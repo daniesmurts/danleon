@@ -51,15 +51,21 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           {product.name}
         </h3>
         
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
-            {product.process}
-          </span>
-          <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
-            {product.roast}
-          </span>
-        </div>
+        {/* Tags — coffee-specific fields only shown when present */}
+        {(product.process || product.roast) && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {product.process && (
+              <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
+                {product.process}
+              </span>
+            )}
+            {product.roast && (
+              <span className="bg-espresso text-white text-[8px] font-heading uppercase tracking-widest px-2 py-0.5">
+                {product.roast}
+              </span>
+            )}
+          </div>
+        )}
 
         <p className="text-xs text-espresso/60 font-body line-clamp-2 leading-relaxed">
           {product.description}

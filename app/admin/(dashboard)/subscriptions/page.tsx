@@ -86,9 +86,9 @@ export default function AdminSubscriptionsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading text-xl font-black tracking-widest text-espresso uppercase">Подписки</h1>
+        <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase">Подписки</h1>
         <div className="bg-white border border-cream/40 px-4 py-2 text-right">
-          <p className="font-heading text-[9px] uppercase tracking-widest text-espresso/40">Выручка / мес</p>
+          <p className="font-heading text-xs uppercase tracking-wide text-espresso/40">Выручка / мес</p>
           <p className="font-heading font-black text-lg text-espresso">{monthlyRevenue.toLocaleString('ru-RU')} ₽</p>
         </div>
       </div>
@@ -99,7 +99,7 @@ export default function AdminSubscriptionsPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 font-heading text-[10px] uppercase tracking-widest transition-colors rounded-sm ${
+            className={`px-4 py-1.5 font-heading text-xs uppercase tracking-wide transition-colors rounded-sm ${
               tab === t ? 'bg-espresso text-cream' : 'text-espresso/50 hover:text-espresso'
             }`}
           >
@@ -118,11 +118,11 @@ export default function AdminSubscriptionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-cream/40 bg-[#F9F9F9]">
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Товар</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Клиент</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Периодичность</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Следующая отправка</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Статус</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Товар</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Клиент</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Периодичность</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Следующая отправка</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Статус</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -147,7 +147,7 @@ export default function AdminSubscriptionsPage() {
                     {sub.nextDeliveryDate ? formatDate(sub.nextDeliveryDate as string) : '—'}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block px-2 py-1 rounded-full text-[10px] font-heading font-bold uppercase tracking-wide ${STATUS_COLOR[sub.status as SubscriptionStatus]}`}>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-wide ${STATUS_COLOR[sub.status as SubscriptionStatus]}`}>
                       {STATUS_LABEL[sub.status as SubscriptionStatus]}
                     </span>
                   </td>
@@ -155,7 +155,7 @@ export default function AdminSubscriptionsPage() {
                     <select
                       value={sub.status as string}
                       onChange={(e) => handleStatus(sub.docId as string, e.target.value as SubscriptionStatus)}
-                      className="border border-espresso/20 px-2 py-1 font-heading text-[9px] uppercase tracking-widest text-espresso bg-white focus:border-espresso outline-none"
+                      className="border border-espresso/20 px-2 py-1 font-heading text-xs uppercase tracking-wide text-espresso bg-white focus:border-espresso outline-none"
                     >
                       <option value="active">Активна</option>
                       <option value="paused">На паузе</option>

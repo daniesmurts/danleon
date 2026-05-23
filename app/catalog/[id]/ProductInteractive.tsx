@@ -5,24 +5,48 @@ import type { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
 const WEIGHT_OPTIONS = [
-  { value: '250', label: '250Г', multiplier: 1 },
-  { value: '500', label: '500Г', multiplier: 1.9 },
-  { value: '1000', label: '1КГ', multiplier: 3.5 },
+  { value: '250',  label: '250Г', multiplier: 1,   priceField: null,         subPriceField: null                    },
+  { value: '500',  label: '500Г', multiplier: 1.9, priceField: 'price500'  as const, subPriceField: 'subscriptionPrice500'  as const },
+  { value: '1000', label: '1КГ',  multiplier: 3.5, priceField: 'price1000' as const, subPriceField: 'subscriptionPrice1000' as const },
 ];
 
 export default function ProductInteractive({ product }: { product: Product }) {
   const { addItem, setCartOpen } = useCart();
+  const isCoffee = !product.category || product.category === 'coffee';
+  const hasVariants = !isCoffee && product.variants && product.variants.length > 0;
+
   const [weight, setWeight] = useState('250');
+  const [variantIdx, setVariantIdx] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
 
   const selectedWeight = WEIGHT_OPTIONS.find((w) => w.value === weight)!;
-  const currentPrice = Math.round(product.price * selectedWeight.multiplier);
-  const subPrice = product.subscriptionPrice
-    ? Math.round(product.subscriptionPrice * selectedWeight.multiplier)
-    : null;
+  const selectedVariant = hasVariants ? product.variants![variantIdx] : null;
+
+  // Price resolution:
+  // 1. Non-coffee with variants → use variant price
+  // 2. Coffee → use per-weight price field or multiplier fallback
+  // 3. Non-coffee flat → use base price
+  const currentPrice = selectedVariant
+    ? selectedVariant.price
+    : isCoffee
+      ? selectedWeight.priceField && product[selectedWeight.priceField]
+        ? (product[selectedWeight.priceField] as number)
+        : Math.round(product.price * selectedWeight.multiplier)
+      : product.price;
+
+  const subPrice = selectedVariant
+    ? (selectedVariant.subscriptionPrice ?? null)
+    : product.subscriptionPrice
+      ? isCoffee
+        ? selectedWeight.subPriceField && product[selectedWeight.subPriceField]
+          ? (product[selectedWeight.subPriceField] as number)
+          : Math.round(product.subscriptionPrice * selectedWeight.multiplier)
+        : product.subscriptionPrice
+      : null;
 
   const handleAddToCart = () => {
-    addItem(product, 1, 'зерно', parseInt(weight), currentPrice);
+    const cartWeight = selectedVariant ? selectedVariant.grams : parseInt(weight);
+    addItem(product, 1, 'зерно', cartWeight, currentPrice);
     setIsAdded(true);
     setCartOpen(true);
     setTimeout(() => setIsAdded(false), 2000);
@@ -55,30 +79,32 @@ export default function ProductInteractive({ product }: { product: Product }) {
         )}
       </div>
 
-      {/* Flavor tags */}
-      <div className="flex flex-wrap gap-2 mb-8 border-b border-espresso/10 pb-6">
-        {(product.flavor ?? []).map((f, i) => (
-          <span key={i} className="border border-espresso/20 px-4 py-2 text-[10px] font-heading font-bold text-espresso uppercase tracking-widest">
-            {f}
-          </span>
-        ))}
-      </div>
+      {/* Flavor tags — coffee only */}
+      {product.flavor && product.flavor.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-espresso/10 pb-6">
+          {product.flavor.map((f, i) => (
+            <span key={i} className="border border-espresso/20 px-4 py-2 text-[10px] font-heading font-bold text-espresso uppercase tracking-widest">
+              {f}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Description */}
       <p className="text-sm font-body text-espresso/70 leading-relaxed mb-8">
         {product.description}
       </p>
 
-      {/* Weight selector */}
-      <div className="flex flex-col gap-6 mb-10">
-        <div>
-          <span className="block text-[10px] font-heading tracking-widest text-espresso/50 uppercase mb-3">ВЕС (НЕТТО)</span>
+      {/* Weight selector — coffee only */}
+      {isCoffee && (
+        <div className="mb-10">
+          <span className="block text-xs font-heading tracking-wide text-espresso/50 uppercase mb-3">ВЕС (НЕТТО)</span>
           <div className="flex flex-wrap gap-2">
             {WEIGHT_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setWeight(opt.value)}
-                className={`px-4 py-3 text-[10px] font-heading font-bold uppercase tracking-widest border transition-colors ${
+                className={`px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
                   weight === opt.value ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
                 }`}
               >
@@ -87,7 +113,27 @@ export default function ProductInteractive({ product }: { product: Product }) {
             ))}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Variant selector — non-coffee products with multiple sizes */}
+      {hasVariants && product.variants!.length > 1 && (
+        <div className="mb-10">
+          <span className="block text-xs font-heading tracking-wide text-espresso/50 uppercase mb-3">ОБЪЁМ</span>
+          <div className="flex flex-wrap gap-2">
+            {product.variants!.map((v, i) => (
+              <button
+                key={i}
+                onClick={() => setVariantIdx(i)}
+                className={`px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
+                  variantIdx === i ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
 

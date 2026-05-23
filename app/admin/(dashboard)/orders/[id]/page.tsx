@@ -86,11 +86,11 @@ export default function OrderDetailPage() {
   return (
     <div className="max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin" className="font-heading text-[10px] tracking-widest uppercase text-espresso/40 hover:text-espresso transition-colors">
+        <Link href="/admin" className="font-heading text-xs tracking-wide uppercase text-espresso/40 hover:text-espresso transition-colors">
           ← Все заказы
         </Link>
         <span className="text-espresso/20">/</span>
-        <span className="font-heading text-[10px] tracking-widest uppercase text-espresso">{order.orderId as string}</span>
+        <span className="font-heading text-xs tracking-wide uppercase text-espresso">{order.orderId as string}</span>
       </div>
 
       <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
@@ -98,7 +98,7 @@ export default function OrderDetailPage() {
           <div className="flex items-center gap-3">
             <h1 className="font-heading text-2xl font-black tracking-widest text-espresso uppercase">{order.orderId as string}</h1>
             {isOffline && (
-              <span className="font-heading text-[9px] uppercase tracking-widest bg-espresso/10 text-espresso/60 px-2 py-1">офлайн</span>
+              <span className="font-heading text-xs uppercase tracking-wide bg-espresso/10 text-espresso/60 px-2 py-1">офлайн</span>
             )}
           </div>
           <p className="font-body text-sm text-espresso/50 mt-1">{formatDate(order.createdAt as { seconds: number })}</p>
@@ -113,7 +113,7 @@ export default function OrderDetailPage() {
             value={status}
             onChange={(e) => handleStatusChange(e.target.value as OrderStatus)}
             disabled={updatingStatus}
-            className="border border-espresso/20 px-3 py-1.5 font-heading text-[10px] uppercase tracking-widest text-espresso bg-white focus:border-espresso outline-none disabled:opacity-50"
+            className="border border-espresso/20 px-3 py-1.5 font-heading text-xs uppercase tracking-wide text-espresso bg-white focus:border-espresso outline-none disabled:opacity-50"
           >
             {(Object.keys(STATUS_LABEL) as OrderStatus[]).map((s) => (
               <option key={s} value={s}>{STATUS_LABEL[s]}</option>
@@ -189,9 +189,9 @@ export default function OrderDetailPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-cream/30">
-              <th className="text-left pb-2 font-heading text-[10px] tracking-widest text-espresso/40 uppercase">Товар</th>
-              <th className="text-center pb-2 font-heading text-[10px] tracking-widest text-espresso/40 uppercase">Кол-во</th>
-              <th className="text-right pb-2 font-heading text-[10px] tracking-widest text-espresso/40 uppercase">Сумма</th>
+              <th className="text-left pb-2 font-heading text-xs tracking-wide text-espresso/40 uppercase">Товар</th>
+              <th className="text-center pb-2 font-heading text-xs tracking-wide text-espresso/40 uppercase">Кол-во</th>
+              <th className="text-right pb-2 font-heading text-xs tracking-wide text-espresso/40 uppercase">Сумма</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-cream/20">

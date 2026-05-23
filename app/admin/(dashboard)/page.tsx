@@ -78,10 +78,10 @@ export default function AdminOrdersPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading text-xl font-black tracking-widest text-espresso uppercase">Заказы</h1>
+        <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase">Заказы</h1>
         <Link
           href="/admin/orders/new"
-          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-widest px-4 py-2.5 hover:bg-espresso/90 transition-colors"
+          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-espresso/90 transition-colors"
         >
           + Офлайн заказ
         </Link>
@@ -93,7 +93,7 @@ export default function AdminOrdersPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-1.5 font-heading text-[10px] uppercase tracking-widest transition-colors rounded-sm ${
+            className={`px-4 py-1.5 font-heading text-xs uppercase tracking-wide transition-colors rounded-sm ${
               tab === t ? 'bg-espresso text-cream' : 'text-espresso/50 hover:text-espresso'
             }`}
           >
@@ -111,7 +111,7 @@ export default function AdminOrdersPage() {
             {tab === 'offline' ? 'Офлайн заказов пока нет' : 'Заказов пока нет'}
           </p>
           {tab === 'offline' && (
-            <Link href="/admin/orders/new" className="inline-block mt-4 font-heading text-xs uppercase tracking-widest text-crimson hover:text-espresso transition-colors">
+            <Link href="/admin/orders/new" className="inline-block mt-4 font-heading text-xs uppercase tracking-wide text-crimson hover:text-espresso transition-colors">
               Создать первый →
             </Link>
           )}
@@ -121,11 +121,11 @@ export default function AdminOrdersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-cream/40 bg-[#F9F9F9]">
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Заказ</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Клиент</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Дата</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Сумма</th>
-                <th className="text-left px-4 py-3 font-heading text-[10px] tracking-widest text-espresso/50 uppercase">Статус</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Заказ</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Клиент</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Дата</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Сумма</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Статус</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -140,7 +140,7 @@ export default function AdminOrdersPage() {
                           {order.orderId as string}
                         </span>
                         {isOffline && (
-                          <span className="font-heading text-[8px] uppercase tracking-widest bg-espresso/10 text-espresso/60 px-1.5 py-0.5 rounded">
+                          <span className="font-heading text-xs uppercase tracking-wide bg-espresso/10 text-espresso/60 px-1.5 py-0.5 rounded">
                             офлайн
                           </span>
                         )}
@@ -158,14 +158,14 @@ export default function AdminOrdersPage() {
                       {formatPrice(order.grandTotal as number)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-1 rounded-full text-[10px] font-heading font-bold uppercase tracking-wide ${STATUS_COLOR[order.status as OrderStatus] ?? 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-wide ${STATUS_COLOR[order.status as OrderStatus] ?? 'bg-gray-100 text-gray-600'}`}>
                         {STATUS_LABEL[order.status as OrderStatus] ?? order.status as string}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/orders/${order.docId as string}`}
-                        className="font-heading text-[10px] tracking-widest uppercase text-crimson hover:text-espresso transition-colors"
+                        className="font-heading text-xs tracking-wide uppercase text-crimson hover:text-espresso transition-colors"
                       >
                         Открыть →
                       </Link>
