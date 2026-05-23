@@ -27,6 +27,7 @@ export default function AccountLoginPage() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupPassword2, setSignupPassword2] = useState('');
+  const [tosAccepted, setTosAccepted] = useState(false);
 
   const handleSignIn = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,6 +46,10 @@ export default function AccountLoginPage() {
 
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault();
+    if (!tosAccepted) {
+      setError('Пожалуйста, примите условия использования и политику конфиденциальности');
+      return;
+    }
     if (signupPassword !== signupPassword2) {
       setError('Пароли не совпадают');
       return;
@@ -175,9 +180,38 @@ export default function AccountLoginPage() {
                   className="w-full px-4 py-3 border border-espresso/20 text-espresso font-body text-sm focus:outline-none focus:border-espresso"
                 />
               </div>
+              {/* TOS checkbox */}
+              <label className="flex items-start gap-3 cursor-pointer group mt-1">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <input
+                    type="checkbox"
+                    checked={tosAccepted}
+                    onChange={(e) => setTosAccepted(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-4 h-4 border transition-colors ${tosAccepted ? 'bg-crimson border-crimson' : 'border-espresso/30 group-hover:border-espresso/60'}`}>
+                    {tosAccepted && (
+                      <svg className="w-4 h-4 text-white p-0.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                        <polyline points="2,8 6,12 14,4" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="font-body text-xs text-espresso/60 leading-relaxed">
+                  Я принимаю{' '}
+                  <Link href="/legal/terms" target="_blank" className="text-espresso underline underline-offset-2 hover:text-crimson transition-colors">
+                    условия использования
+                  </Link>
+                  {' '}и{' '}
+                  <Link href="/legal/privacy" target="_blank" className="text-espresso underline underline-offset-2 hover:text-crimson transition-colors">
+                    политику конфиденциальности
+                  </Link>
+                </span>
+              </label>
+
               <button
-                type="submit" disabled={loading}
-                className="w-full bg-crimson hover:bg-crimson-dark disabled:opacity-50 text-white font-heading font-bold tracking-widest uppercase text-xs py-3 transition-colors mt-2"
+                type="submit" disabled={loading || !tosAccepted}
+                className="w-full bg-crimson hover:bg-crimson-dark disabled:opacity-40 disabled:cursor-not-allowed text-white font-heading font-bold tracking-widest uppercase text-xs py-3 transition-colors mt-1"
               >
                 {loading ? 'СОЗДАНИЕ...' : 'СОЗДАТЬ АККАУНТ'}
               </button>

@@ -23,8 +23,8 @@ export default async function CatalogPage() {
               Каталог
             </h1>
             <p className="mt-4 text-base md:text-lg text-espresso/60 font-body max-w-xl leading-relaxed">
-              Откройте для себя коллекцию премиального угандийского кофе —
-              от&nbsp;светлой до&nbsp;тёмной обжарки
+              Specialty-кофе прямой поставки с высокогорных плантаций Уганды.
+              Лично отобранный, обжаренный малыми партиями —&nbsp;в&nbsp;трёх форматах.
             </p>
           </AnimatedReveal>
         </div>

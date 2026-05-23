@@ -42,7 +42,7 @@ export default async function HomePage() {
             </AnimatedReveal>
             <AnimatedReveal delay={400}>
               <p className="text-cream/80 font-body text-sm md:text-base max-w-md mb-10 leading-relaxed">
-                Откройте для себя аутентичный кофе спешелти класса, выращенный на высокогорьях Уганды. Свежая обжарка и бескомпромиссное качество.
+                Specialty-кофе прямой поставки с высокогорных плантаций Уганды. Каждый лот лично отобран на месте, обжарен малыми партиями и доставлен прямо к вам.
               </p>
             </AnimatedReveal>
             <AnimatedReveal delay={600}>
@@ -52,33 +52,79 @@ export default async function HomePage() {
             </AnimatedReveal>
           </div>
 
-          <div className="hidden md:block w-1/3 relative">
-            <AnimatedReveal delay={800} className="relative z-20 translate-y-12 border-4 border-espresso">
-              <div className="relative aspect-square w-64 mx-auto bg-cream">
-                <Image src="/images/product-sipi-falls.png" alt="Кофе ДАНЛЕОН" fill className="object-cover" />
-              </div>
-            </AnimatedReveal>
-          </div>
         </div>
       </section>
 
       {/* ═══ Featured Products ═══ */}
       <section className="py-24" id="featured-products">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12 border-b border-espresso pb-4">
+          <div className="flex justify-between items-end mb-4 border-b border-espresso pb-4">
             <div>
-              <span className="text-[10px] font-heading text-crimson uppercase tracking-widest mb-1 block">НАШ ВЫБОР</span>
-              <h2 className="font-heading text-3xl font-black text-espresso uppercase tracking-widest">ХИТЫ ИЗ УГАНДЫ</h2>
+              <span className="text-[10px] font-heading text-crimson uppercase tracking-widest mb-1 block">НАШ КОФЕ</span>
+              <h2 className="font-heading text-3xl font-black text-espresso uppercase tracking-widest">ЕДИНЫЙ КУПАЖ. ТРИ ОБЪЁМА.</h2>
             </div>
             <Link href="/catalog" className="hidden sm:inline-block border border-espresso text-espresso hover:bg-espresso hover:text-white px-6 py-2 text-[10px] font-heading font-bold uppercase tracking-widest transition-colors">
-              ВСЕ ТОВАРЫ
+              В КАТАЛОГ
             </Link>
           </div>
+          <p className="font-body text-xs text-espresso/50 mb-10 tracking-wide">
+            50% арабика · 50% робуста · высокогорья Уганды · средняя обжарка
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {featured.slice(0, 3).map((product, index) => (
               <AnimatedReveal key={product.id} delay={index * 150}>
                 <ProductCard product={product} index={index} />
+              </AnimatedReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ Quality Standards ═══ */}
+      <section className="bg-espresso py-20 md:py-28" id="quality">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <AnimatedReveal>
+            <div className="border-b border-cream/10 pb-4 mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-heading text-crimson uppercase tracking-widest mb-2 block">НАШ СТАНДАРТ</span>
+                <h2 className="font-heading text-3xl font-black text-cream uppercase tracking-widest">КАЧЕСТВО БЕЗ КОМПРОМИССОВ</h2>
+              </div>
+              <p className="font-body text-xs text-cream/50 max-w-xs leading-relaxed sm:text-right">
+                Мы не просто продаём кофе — мы лично отвечаем за каждый лот от фермы до вашей чашки.
+              </p>
+            </div>
+          </AnimatedReveal>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {([
+              {
+                num: '01',
+                title: 'ЛИЧНЫЙ ОТБОР',
+                body: 'Каждый лот зёрен проходит личную проверку непосредственно на угандийских плантациях до момента закупки — никаких посредников, никаких сюрпризов.',
+              },
+              {
+                num: '02',
+                title: 'SPECIALTY-КЛАСС',
+                body: 'Работаем исключительно с зёрнами specialty-класса с оценкой свыше 80 баллов по шкале SCA — международному стандарту кофе высшего уровня.',
+              },
+              {
+                num: '03',
+                title: 'СВЕЖАЯ ОБЖАРКА',
+                body: 'Обжарка малыми партиями позволяет передать кофе в пике вкусового потенциала — без залёживания на складе, без потери аромата.',
+              },
+              {
+                num: '04',
+                title: 'ПРЯМАЯ ЦЕПОЧКА',
+                body: 'Прямые отношения с фермерами региона Рувензори обеспечивают полную прозрачность происхождения и честную цену на каждом этапе.',
+              },
+            ] as const).map(({ num, title, body }, i) => (
+              <AnimatedReveal key={num} delay={i * 120}>
+                <div>
+                  <span className="font-heading text-6xl font-black text-cream/10 block mb-5 leading-none select-none">{num}</span>
+                  <h3 className="font-heading font-bold text-sm text-cream uppercase tracking-widest mb-3">{title}</h3>
+                  <p className="font-body text-xs text-cream/55 leading-relaxed">{body}</p>
+                </div>
               </AnimatedReveal>
             ))}
           </div>
