@@ -66,3 +66,7 @@ jobs:
             TBANK_TERMINAL_KEY=${{ secrets.TBANK_TERMINAL_KEY }}
             TBANK_SECRET_KEY=${{ secrets.TBANK_SECRET_KEY }}
             ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+            ADMIN_UID=${{ secrets.ADMIN_UID }}
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
