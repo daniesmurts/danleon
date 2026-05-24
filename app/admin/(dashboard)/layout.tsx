@@ -40,6 +40,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: '/admin/batches',       label: 'Партии'      },
             { href: '/admin/purchases',     label: 'Закупки'     },
             { href: '/admin/inventory',     label: 'Остатки'     },
+            { href: '/admin/clients',       label: 'Клиенты'     },
             { href: '/admin/stats',         label: 'Статистика'  },
           ].map(({ href, label }) => (
             <Link
