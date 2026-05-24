@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll } from '@/lib/admin-api';
 import Link from 'next/link';
 import type { OrderStatus, OrderSource } from '@/lib/types';
 
@@ -41,14 +40,11 @@ export default function AdminOrdersPage() {
   const [tab, setTab] = useState<Tab>('all');
 
   useEffect(() => {
-    getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')))
-      .then((snap) => {
-        setOrders(snap.docs.map((d) => ({ docId: d.id, ...d.data() })));
-        setLoading(false);
-      })
+    adminGetAll('orders', { orderBy: 'createdAt', dir: 'desc' })
+      .then((docs) => { setOrders(docs); setLoading(false); })
       .catch((err) => {
         console.error(err);
-        setError('Ошибка доступа. Убедитесь, что вы вошли в аккаунт с правами администратора.');
+        setError('Ошибка загрузки заказов.');
         setLoading(false);
       });
   }, []);

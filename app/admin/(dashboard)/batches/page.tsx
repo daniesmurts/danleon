@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll, adminCreate } from '@/lib/admin-api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { BatchItem } from '@/lib/types';
@@ -54,24 +53,19 @@ export default function AdminBatchesPage() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    getDocs(query(collection(db, 'batches'), orderBy('createdAt', 'desc')))
-      .then((snap) => {
-        setBatches(snap.docs.map((d) => ({ docId: d.id, ...d.data() })));
-        setLoading(false);
-      })
+    adminGetAll('batches', { orderBy: 'createdAt', dir: 'desc' })
+      .then((docs) => { setBatches(docs); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   const createBatch = async () => {
     setCreating(true);
-    const ref = await addDoc(collection(db, 'batches'), {
+    const docId = await adminCreate('batches', {
       name: `Партия ${batches.length + 1}`,
       status: 'open',
       items: TEMPLATE_ITEMS,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
     });
-    router.push(`/admin/batches/${ref.id}`);
+    router.push(`/admin/batches/${docId}`);
   };
 
   if (loading) return (

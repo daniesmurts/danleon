@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll } from '@/lib/admin-api';
 import type { BatchItem, InventoryItem, Purchase } from '@/lib/types';
 import Link from 'next/link';
 
@@ -37,15 +36,15 @@ export default function AdminStatsPage() {
 
   useEffect(() => {
     Promise.all([
-      getDocs(query(collection(db, 'orders'),  orderBy('createdAt', 'desc'))),
-      getDocs(query(collection(db, 'batches'), orderBy('createdAt', 'desc'))),
-      getDocs(collection(db, 'inventory')),
-      getDocs(collection(db, 'purchases')).catch(() => null),  // graceful — collection may not exist yet
+      adminGetAll('orders',    { orderBy: 'createdAt', dir: 'desc' }),
+      adminGetAll('batches',   { orderBy: 'createdAt', dir: 'desc' }),
+      adminGetAll('inventory'),
+      adminGetAll('purchases').catch(() => []),  // graceful — collection may not exist yet
     ]).then(([o, b, inv, pur]) => {
-      setOrders(o.docs.map((d) => ({ docId: d.id, ...d.data() })));
-      setBatches(b.docs.map((d) => ({ docId: d.id, ...d.data() })));
-      setInventory(inv.docs.map((d) => ({ docId: d.id, price: 0, ...d.data() } as InventoryItem)));
-      if (pur) setPurchases(pur.docs.map((d) => ({ docId: d.id, grandTotal: 0, items: [], ...d.data() } as unknown as Purchase)));
+      setOrders(o);
+      setBatches(b);
+      setInventory(inv.map((d) => ({ price: 0, ...d } as unknown as InventoryItem)));
+      setPurchases(pur.map((d) => ({ grandTotal: 0, items: [], ...d } as unknown as Purchase)));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetOne, adminUpdate } from '@/lib/admin-api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Purchase, PurchaseItem } from '@/lib/types';
@@ -27,10 +26,10 @@ export default function PurchaseDetailPage() {
   const [saved, setSaved]       = useState(false);
 
   useEffect(() => {
-    getDoc(doc(db, 'purchases', id))
-      .then((snap) => {
-        if (!snap.exists()) { router.push('/admin/purchases'); return; }
-        setPurchase({ docId: snap.id, grandTotal: 0, items: [], ...snap.data() } as unknown as Purchase);
+    adminGetOne('purchases', id)
+      .then((data) => {
+        if (!data) { router.push('/admin/purchases'); return; }
+        setPurchase({ grandTotal: 0, items: [], ...data } as unknown as Purchase);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -39,15 +38,13 @@ export default function PurchaseDetailPage() {
   const save = useCallback(async (updated: Purchase) => {
     setSaving(true);
     const grandTotal = updated.items.reduce((s, i) => s + (i.totalCost || 0), 0);
-    const toSave = { ...updated, grandTotal, updatedAt: serverTimestamp() };
-    await setDoc(doc(db, 'purchases', updated.docId), {
-      date:       toSave.date,
-      supplier:   toSave.supplier,
-      note:       toSave.note ?? '',
-      items:      toSave.items,
-      grandTotal: toSave.grandTotal,
-      updatedAt:  toSave.updatedAt,
-    }, { merge: true });
+    await adminUpdate('purchases', updated.docId, {
+      date:       updated.date,
+      supplier:   updated.supplier,
+      note:       updated.note ?? '',
+      items:      updated.items,
+      grandTotal,
+    });
     setPurchase({ ...updated, grandTotal });
     setSaving(false);
     setSaved(true);

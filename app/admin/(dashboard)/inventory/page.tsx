@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll, adminSet, adminDeleteDoc } from '@/lib/admin-api';
 import type { InventoryItem } from '@/lib/types';
 
 type Row = InventoryItem;
@@ -36,11 +35,9 @@ export default function AdminInventoryPage() {
   const [newThreshold, setNewThreshold] = useState('10');
 
   useEffect(() => {
-    getDocs(collection(db, 'inventory'))
-      .then((snap) => {
-        const data = snap.docs
-          .map((d) => ({ docId: d.id, price: 0, ...d.data() } as Row))
-          .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    adminGetAll('inventory')
+      .then((docs) => {
+        const data = docs.map((d) => ({ price: 0, ...d } as unknown as Row)).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
         setRows(data);
         setLoading(false);
       })
@@ -48,7 +45,7 @@ export default function AdminInventoryPage() {
   }, []);
 
   const saveRow = async (row: Row) => {
-    await setDoc(doc(db, 'inventory', row.docId), {
+    await adminSet('inventory', row.docId, {
       name: row.name,
       unit: row.unit,
       stock: row.stock,
@@ -56,7 +53,6 @@ export default function AdminInventoryPage() {
       price: row.price,
       costPrice: row.costPrice ?? 0,
       ...(row.packSize ? { packSize: row.packSize } : {}),
-      updatedAt: serverTimestamp(),
     });
   };
 
@@ -148,7 +144,7 @@ export default function AdminInventoryPage() {
   };
 
   const handleDelete = async (docId: string) => {
-    await deleteDoc(doc(db, 'inventory', docId));
+    await adminDeleteDoc('inventory', docId);
     setRows((prev) => prev.filter((r) => r.docId !== docId));
   };
 

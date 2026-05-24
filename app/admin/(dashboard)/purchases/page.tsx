@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll, adminCreate, adminDeleteDoc } from '@/lib/admin-api';
 import Link from 'next/link';
 import type { Purchase } from '@/lib/types';
 
@@ -27,11 +26,8 @@ export default function AdminPurchasesPage() {
   const [newNote, setNewNote]         = useState('');
 
   useEffect(() => {
-    getDocs(query(collection(db, 'purchases'), orderBy('date', 'desc')))
-      .then((snap) => {
-        setRows(snap.docs.map((d) => ({ docId: d.id, grandTotal: 0, items: [], ...d.data() } as unknown as Purchase)));
-        setLoading(false);
-      })
+    adminGetAll('purchases', { orderBy: 'date', dir: 'desc' })
+      .then((docs) => { setRows(docs.map((d) => ({ grandTotal: 0, items: [], ...d } as unknown as Purchase))); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
@@ -44,10 +40,9 @@ export default function AdminPurchasesPage() {
       note: newNote.trim(),
       items: [],
       grandTotal: 0,
-      createdAt: serverTimestamp(),
     };
-    const ref = await addDoc(collection(db, 'purchases'), data);
-    setRows((prev) => [{ docId: ref.id, ...data } as unknown as Purchase, ...prev]);
+    const docId = await adminCreate('purchases', data);
+    setRows((prev) => [{ docId, ...data } as unknown as Purchase, ...prev]);
     setNewDate(new Date().toISOString().slice(0, 10));
     setNewSupplier('');
     setNewNote('');
@@ -56,7 +51,7 @@ export default function AdminPurchasesPage() {
   };
 
   const handleDelete = async (docId: string) => {
-    await deleteDoc(doc(db, 'purchases', docId));
+    await adminDeleteDoc('purchases', docId);
     setRows((prev) => prev.filter((r) => r.docId !== docId));
   };
 

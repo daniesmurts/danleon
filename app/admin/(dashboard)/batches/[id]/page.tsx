@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetOne, adminUpdate } from '@/lib/admin-api';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { BatchItem, BatchCategory, BatchStatus } from '@/lib/types';
@@ -55,11 +54,10 @@ export default function BatchDetailPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    getDoc(doc(db, 'batches', id)).then((snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setName(data.name ?? '');
-        setStatus(data.status ?? 'open');
+    adminGetOne('batches', id).then((data) => {
+      if (data) {
+        setName((data.name as string) ?? '');
+        setStatus((data.status as BatchStatus) ?? 'open');
         setItems((data.items as BatchItem[]) ?? []);
       }
       setLoading(false);
@@ -99,7 +97,7 @@ export default function BatchDetailPage() {
 
   const save = async () => {
     setSaving(true);
-    await updateDoc(doc(db, 'batches', id), { name, status, items, updatedAt: serverTimestamp() });
+    await adminUpdate('batches', id, { name, status, items });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

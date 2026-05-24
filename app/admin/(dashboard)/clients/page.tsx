@@ -1,8 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll } from '@/lib/admin-api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,9 +136,9 @@ export default function AdminClientsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc')))
-      .then((snap) => {
-        const orders = snap.docs.map((d) => ({ docId: d.id, ...d.data() } as OrderSnapshot));
+    adminGetAll('orders', { orderBy: 'createdAt', dir: 'desc' })
+      .then((docs) => {
+        const orders = docs as unknown as OrderSnapshot[];
 
         // Group by phone
         const byPhone = new Map<string, OrderSnapshot[]>();

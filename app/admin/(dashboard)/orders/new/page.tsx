@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminCreate } from '@/lib/admin-api';
 import { getAllProducts } from '@/lib/sanity';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
@@ -89,7 +88,7 @@ export default function NewOfflineOrderPage() {
     setSaving(true);
     setError('');
     try {
-      await addDoc(collection(db, 'orders'), {
+      await adminCreate('orders', {
         orderId: generateOfflineId(),
         source: 'offline',
         status,
@@ -107,8 +106,6 @@ export default function NewOfflineOrderPage() {
         deliveryCost: 0,
         grandTotal: totalPrice,
         comment,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
       router.push('/admin');
     } catch (err) {

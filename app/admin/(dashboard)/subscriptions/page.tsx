@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, orderBy, query, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetAll, adminUpdate } from '@/lib/admin-api';
 import Image from 'next/image';
 import type { SubscriptionStatus, SubscriptionFrequency } from '@/lib/types';
 
@@ -40,20 +39,13 @@ export default function AdminSubscriptionsPage() {
   const [tab, setTab] = useState<Tab>('active');
 
   useEffect(() => {
-    getDocs(query(collection(db, 'subscriptions'), orderBy('createdAt', 'desc')))
-      .then((snap) => {
-        setSubs(snap.docs.map((d) => ({ docId: d.id, ...d.data() })));
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError('Ошибка загрузки. Проверьте права доступа.');
-        setLoading(false);
-      });
+    adminGetAll('subscriptions', { orderBy: 'createdAt', dir: 'desc' })
+      .then((docs) => { setSubs(docs); setLoading(false); })
+      .catch((err) => { console.error(err); setError('Ошибка загрузки подписок.'); setLoading(false); });
   }, []);
 
   const handleStatus = async (docId: string, status: SubscriptionStatus) => {
-    await updateDoc(doc(db, 'subscriptions', docId), { status, updatedAt: serverTimestamp() });
+    await adminUpdate('subscriptions', docId, { status });
     setSubs((prev) => prev.map((s) => s.docId === docId ? { ...s, status } : s));
   };
 

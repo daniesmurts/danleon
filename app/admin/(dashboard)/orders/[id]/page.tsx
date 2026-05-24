@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminGetOne, adminUpdate } from '@/lib/admin-api';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { OrderStatus } from '@/lib/types';
@@ -112,11 +111,8 @@ export default function OrderDetailPage() {
   const [saved,   setSaved]   = useState(false);
 
   useEffect(() => {
-    getDoc(doc(db, 'orders', id))
-      .then((snap) => {
-        if (snap.exists()) setOrder({ docId: snap.id, ...snap.data() });
-        setLoading(false);
-      })
+    adminGetOne('orders', id)
+      .then((data) => { if (data) setOrder(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, [id]);
 
@@ -149,9 +145,8 @@ export default function OrderDetailPage() {
         unitPrice:   i.unitPrice,
         grind:       i.grind ?? 'зерно',
       })),
-      updatedAt: serverTimestamp(),
     };
-    await updateDoc(doc(db, 'orders', id), payload);
+    await adminUpdate('orders', id, payload);
     setOrder((prev) => prev ? { ...prev, ...payload } : prev);
     setEditing(false);
     setDraft(null);
