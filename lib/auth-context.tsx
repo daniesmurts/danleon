@@ -50,14 +50,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: `${firstName} ${lastName}` });
-    // Create user profile document in Firestore
-    await setDoc(doc(db, 'users', cred.user.uid), {
+    // Create user profile document — fire-and-forget so a Firestore permission
+    // error doesn't silently swallow the successful auth or block navigation.
+    setDoc(doc(db, 'users', cred.user.uid), {
       firstName,
       lastName,
       email,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    }).catch((err) => console.warn('Failed to write user profile to Firestore:', err));
   };
 
   const signIn = async (email: string, password: string) => {

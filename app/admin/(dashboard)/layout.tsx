@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import AdminLogoutButton from '@/components/admin/AdminLogoutButton';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -25,11 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </svg>
               Сайт
             </Link>
-            <form action="/api/admin/logout" method="POST">
-              <button type="submit" className="font-heading text-xs tracking-wide uppercase text-cream/50 hover:text-cream transition-colors">
-                Выйти
-              </button>
-            </form>
+            <AdminLogoutButton />
           </div>
         </div>
         {/* Nav: scrollable on mobile */}

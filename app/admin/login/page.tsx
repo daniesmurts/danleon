@@ -2,31 +2,50 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    // 1. Verify password → set admin_auth cookie
     const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
     });
 
-    if (res.ok) {
-      router.push('/admin');
-      router.refresh();
-    } else {
+    if (!res.ok) {
       setError('Неверный пароль');
       setLoading(false);
+      return;
     }
+
+    // 2. Exchange cookie for a Firebase custom token → sign into Firebase
+    //    so Firestore security rules (isAdmin) work for admin operations.
+    try {
+      const tokenRes = await fetch('/api/admin/firebase-token', { method: 'POST' });
+      if (tokenRes.ok) {
+        const { token } = await tokenRes.json();
+        await signInWithCustomToken(auth, token);
+      } else {
+        // Non-fatal: admin panel still works via cookie; Firestore rules will fall back to `if true`
+        console.warn('Firebase token exchange failed — Firestore admin rules may not apply');
+      }
+    } catch (err) {
+      console.warn('Firebase sign-in skipped:', err);
+    }
+
+    router.push('/admin');
+    router.refresh();
   };
 
   return (
