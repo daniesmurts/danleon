@@ -16,6 +16,7 @@ import { auth, db } from '@/lib/firebase';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logOut: () => Promise<void>;
@@ -27,11 +28,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
+
+      // Check for admin custom claim
+      if (firebaseUser) {
+        const tokenResult = await firebaseUser.getIdTokenResult();
+        setIsAdmin(tokenResult.claims['role'] === 'admin');
+      } else {
+        setIsAdmin(false);
+      }
 
       // Sync session cookie with server
       if (firebaseUser) {
@@ -74,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, logOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, signUp, signIn, logOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
