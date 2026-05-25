@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 
@@ -12,10 +13,25 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addItem, setCartOpen } = useCart();
+  const router = useRouter();
+
+  // Coffee always needs weight selection; non-coffee with multiple variants also needs it
+  const isCoffee = !product.category || product.category === 'coffee';
+  const hasVariants = !isCoffee && product.variants && product.variants.length > 1;
+  const needsSelection = isCoffee || hasVariants;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    addItem(product, 1, 'зерно');
+    if (needsSelection) {
+      // Send to product page so the user can pick weight/variant
+      router.push(`/catalog/${product.id}`);
+      return;
+    }
+    // Single-SKU non-coffee product — add directly
+    const variant = product.variants?.[0];
+    const price = variant?.price ?? product.price;
+    const weight = variant?.grams ?? product.weight;
+    addItem(product, 1, 'зерно', weight, price);
     setCartOpen(true);
   };
 
@@ -74,11 +90,11 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
 
       {/* Button fixed at the bottom */}
       <div className="p-6 pt-0 mt-auto">
-        <button 
+        <button
           onClick={handleAddToCart}
           className="w-full bg-crimson hover:bg-crimson-dark text-white font-heading font-bold text-sm tracking-[0.15em] uppercase py-3 transition-colors"
         >
-          В КОРЗИНУ
+          {needsSelection ? 'ВЫБРАТЬ' : 'В КОРЗИНУ'}
         </button>
       </div>
     </div>
