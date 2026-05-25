@@ -72,7 +72,7 @@ function FormField({
 
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
-  const { isSubscribed } = useAuth();
+  const { user, isSubscribed } = useAuth();
   const [isPending, startTransition] = useTransition();
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -89,6 +89,43 @@ export default function CheckoutPage() {
     paymentMethod: 'card',
     comment: '',
   });
+
+  // Profile autofill
+  const [myProfile, setMyProfile] = useState<{ firstName: string; lastName: string; phone: string; email: string } | null>(null);
+  const [recipientIsSelf, setRecipientIsSelf] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/user/profile')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.firstName || data.lastName || data.phone || data.email) {
+          const profile = {
+            firstName: data.firstName ?? '',
+            lastName:  data.lastName  ?? '',
+            phone:     data.phone     ?? '',
+            email:     data.email     ?? user.email ?? '',
+          };
+          setMyProfile(profile);
+          setFormData((prev) => ({ ...prev, ...profile }));
+        } else if (user.email) {
+          setFormData((prev) => ({ ...prev, email: user.email! }));
+        }
+      })
+      .catch(() => {
+        if (user.email) setFormData((prev) => ({ ...prev, email: user.email! }));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
+
+  const handleRecipientToggle = (isSelf: boolean) => {
+    setRecipientIsSelf(isSelf);
+    if (isSelf && myProfile) {
+      setFormData((prev) => ({ ...prev, ...myProfile }));
+    } else if (!isSelf) {
+      setFormData((prev) => ({ ...prev, firstName: '', lastName: '', phone: '' }));
+    }
+  };
 
   const [error, setError] = useState('');
 
@@ -248,6 +285,31 @@ export default function CheckoutPage() {
             {/* Recipient Details */}
             <div>
               <h2 className="font-heading text-sm font-bold tracking-widest text-espresso uppercase mb-4">ДАННЫЕ ПОЛУЧАТЕЛЯ</h2>
+
+              {/* Recipient toggle — only shown for logged-in users with a saved profile */}
+              {user && myProfile && (
+                <div className="flex gap-2 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => handleRecipientToggle(true)}
+                    className={`px-4 py-2 font-heading text-xs font-bold tracking-widest uppercase border transition-colors ${
+                      recipientIsSelf ? 'bg-espresso text-white border-espresso' : 'border-espresso/20 text-espresso/60 hover:border-espresso hover:text-espresso'
+                    }`}
+                  >
+                    Это я
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRecipientToggle(false)}
+                    className={`px-4 py-2 font-heading text-xs font-bold tracking-widest uppercase border transition-colors ${
+                      !recipientIsSelf ? 'bg-espresso text-white border-espresso' : 'border-espresso/20 text-espresso/60 hover:border-espresso hover:text-espresso'
+                    }`}
+                  >
+                    Другой получатель
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField label="ИМЯ" id="firstName" placeholder="Иван" value={formData.firstName} onChange={(v) => updateField('firstName', v)} required />
                 <FormField label="ФАМИЛИЯ" id="lastName" placeholder="Иванов" value={formData.lastName} onChange={(v) => updateField('lastName', v)} required />

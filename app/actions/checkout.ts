@@ -1,8 +1,8 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { FieldValue } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 import { initPayment } from '@/lib/tbank';
 import { CartItem, CheckoutFormData } from '@/lib/types';
 
@@ -38,8 +38,10 @@ export async function createOrder(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
   try {
+    const db = adminDb();
+
     // 1. Create order in Firestore with pending status
-    const orderRef = await addDoc(collection(db, 'orders'), {
+    const orderRef = await db.collection('orders').add({
       orderId,
       status: 'pending',
       ...(userId ? { userId } : {}),
@@ -68,8 +70,8 @@ export async function createOrder(
       deliveryMethod: formData.deliveryMethod,
       paymentMethod: formData.paymentMethod,
       comment: formData.comment,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     // 2. Init TBank payment (amount in kopecks)
@@ -85,14 +87,13 @@ export async function createOrder(
     });
 
     // 3. Save TBank payment details back to the order
-    const { updateDoc, doc } = await import('firebase/firestore');
-    await updateDoc(doc(db, 'orders', orderRef.id), {
+    await db.collection('orders').doc(orderRef.id).update({
       tbank: {
         paymentId: tbank.paymentId,
         paymentUrl: tbank.paymentUrl,
         status: tbank.status,
       },
-      updatedAt: serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { paymentUrl: tbank.paymentUrl, orderId };
