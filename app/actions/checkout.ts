@@ -10,6 +10,7 @@ const DELIVERY_PRICES: Record<string, number> = {
   sdek: 250,
   courier: 390,
   pickup: 0,
+  yandex_market: 0,
 };
 
 export interface CheckoutActionResult {

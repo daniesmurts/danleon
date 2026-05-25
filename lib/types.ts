@@ -48,7 +48,7 @@ export interface CheckoutFormData {
   house: string;
   apartment: string;
   postalCode: string;
-  deliveryMethod: 'courier' | 'pickup' | 'sdek';
+  deliveryMethod: 'courier' | 'pickup' | 'sdek' | 'yandex_market';
   paymentMethod: 'card' | 'sbp' | 'cash';
   comment: string;
 }

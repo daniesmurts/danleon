@@ -1,17 +1,27 @@
 'use client';
 
-import { useState, FormEvent, useTransition } from 'react';
+import { useState, FormEvent, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/cart-context';
+import { useAuth } from '@/lib/auth-context';
 import { CheckoutFormData } from '@/lib/types';
 import AnimatedReveal from '@/components/ui/AnimatedReveal';
 import { createOrder } from '@/app/actions/checkout';
 
 const DELIVERY_OPTIONS = [
-  { value: 'sdek' as const, label: 'СДЭК', description: 'Пункт выдачи', price: 250 },
-  { value: 'courier' as const, label: 'КУРЬЕР', description: 'Ближайшее время', price: 390 },
-  { value: 'pickup' as const, label: 'САМОВЫВОЗ', description: 'Ростокино, Москва', price: 0 },
+  { value: 'sdek' as const,    label: 'СДЭК',      description: 'Пункт выдачи',       price: 250 },
+  { value: 'courier' as const, label: 'КУРЬЕР',    description: 'Ближайшее время',     price: 390 },
+  { value: 'pickup' as const,  label: 'САМОВЫВОЗ', description: 'Ростокино, Казань',   price: 0   },
+];
+
+const SUBSCRIBER_KAZAN_OPTIONS = [
+  { value: 'courier' as const, label: 'КУРЬЕР',    description: 'По Казани',           price: 0 },
+  { value: 'pickup' as const,  label: 'САМОВЫВОЗ', description: 'Ростокино, Казань',   price: 0 },
+];
+
+const SUBSCRIBER_OTHER_OPTIONS = [
+  { value: 'yandex_market' as const, label: 'ПВЗ ЯНДЕКС МАРКЕТ', description: 'Ближайший пункт выдачи', price: 0 },
 ];
 
 const PAYMENT_OPTIONS = [
@@ -62,6 +72,7 @@ function FormField({
 
 export default function CheckoutPage() {
   const { items, totalPrice } = useCart();
+  const { isSubscribed } = useAuth();
   const [isPending, startTransition] = useTransition();
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -85,7 +96,22 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const selectedDelivery = DELIVERY_OPTIONS.find((d) => d.value === formData.deliveryMethod)!;
+  const isKazan = formData.city.trim().toLowerCase().includes('казан');
+  const activeDeliveryOptions = isSubscribed
+    ? isKazan ? SUBSCRIBER_KAZAN_OPTIONS : SUBSCRIBER_OTHER_OPTIONS
+    : DELIVERY_OPTIONS;
+
+  // Reset delivery method when the available options change
+  useEffect(() => {
+    const valid = activeDeliveryOptions.some((o) => o.value === formData.deliveryMethod);
+    if (!valid) {
+      updateField('deliveryMethod', activeDeliveryOptions[0].value);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSubscribed, isKazan]);
+
+  const selectedDelivery = activeDeliveryOptions.find((d) => d.value === formData.deliveryMethod)
+    ?? activeDeliveryOptions[0];
   const deliveryCost = selectedDelivery.price;
   const grandTotal = totalPrice + deliveryCost;
 
@@ -124,25 +150,27 @@ export default function CheckoutPage() {
           {/* LEFT COLUMN */}
           <div className="lg:w-2/3 flex flex-col gap-12">
 
-            {/* Subscription Banner */}
-            <AnimatedReveal>
-              <div className="bg-[#F3EFE0] border border-cream p-6 flex gap-4">
-                <svg className="w-5 h-5 text-crimson shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <div>
-                  <h3 className="font-heading font-bold text-espresso tracking-widest uppercase mb-1">ПОДПИШИТЕСЬ И ЭКОНОМЬТЕ 15%</h3>
-                  <p className="text-espresso/70 text-xs font-body mb-2">Регулярная доставка вашего любимого кофе каждые 2 или 4 недели. Отменяйте в любой момент.</p>
-                  <a href="#" className="text-crimson text-[10px] font-heading font-bold tracking-widest uppercase underline underline-offset-4">ПОДРОБНЕЕ О ПОДПИСКЕ</a>
+            {/* Subscription Banner — only for non-subscribers */}
+            {!isSubscribed && (
+              <AnimatedReveal>
+                <div className="bg-[#F3EFE0] border border-cream p-6 flex gap-4">
+                  <svg className="w-5 h-5 text-crimson shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <div>
+                    <h3 className="font-heading font-bold text-espresso tracking-widest uppercase mb-1">ПОДПИШИТЕСЬ И ЭКОНОМЬТЕ 15%</h3>
+                    <p className="text-espresso/70 text-xs font-body mb-2">Регулярная доставка вашего любимого кофе каждые 2 или 4 недели. Отменяйте в любой момент.</p>
+                    <Link href="/account/subscription" className="text-crimson text-[10px] font-heading font-bold tracking-widest uppercase underline underline-offset-4">ПОДРОБНЕЕ О ПОДПИСКЕ</Link>
+                  </div>
                 </div>
-              </div>
-            </AnimatedReveal>
+              </AnimatedReveal>
+            )}
 
             {/* Delivery Methods */}
             <div>
               <h2 className="font-heading text-sm font-bold tracking-widest text-espresso uppercase mb-4">СПОСОБ ДОСТАВКИ</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {DELIVERY_OPTIONS.map((opt) => (
+              <div className={`grid gap-4 ${activeDeliveryOptions.length === 1 ? 'grid-cols-1 max-w-xs' : 'grid-cols-1 md:grid-cols-3'}`}>
+                {activeDeliveryOptions.map((opt) => (
                   <label
                     key={opt.value}
                     className={`border p-4 cursor-pointer transition-colors flex flex-col justify-between h-32 ${formData.deliveryMethod === opt.value ? 'border-espresso' : 'border-espresso/20'}`}
@@ -156,7 +184,7 @@ export default function CheckoutPage() {
                       </div>
                       <span className="text-[10px] font-heading text-espresso/60 uppercase tracking-widest">{opt.description}</span>
                     </div>
-                    <span className="font-heading font-bold text-sm text-espresso mt-4 block">
+                    <span className="font-heading font-bold text-sm text-crimson mt-4 block">
                       {opt.price === 0 ? 'БЕСПЛАТНО' : `от ${opt.price} ₽`}
                     </span>
                     <input
@@ -170,6 +198,18 @@ export default function CheckoutPage() {
                   </label>
                 ))}
               </div>
+
+              {/* Note for subscribers outside Kazan */}
+              {isSubscribed && !isKazan && (
+                <div className="mt-4 flex gap-3 bg-[#F3EFE0] border border-cream p-4">
+                  <svg className="w-4 h-4 text-espresso/50 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                  </svg>
+                  <p className="text-xs font-body text-espresso/70 leading-relaxed">
+                    Если рядом с вами нет пункта выдачи Яндекс Маркет — не беспокойтесь. Наш менеджер свяжется с вами после оформления заказа и согласует удобный способ доставки.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Payment Methods */}
