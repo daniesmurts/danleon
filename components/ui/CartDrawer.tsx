@@ -118,16 +118,9 @@ export default function CartDrawer({ open, onClose }: CartDrawerProps) {
               </span>
             </div>
             <Link
-              href="/cart"
-              onClick={onClose}
-              className="btn-base w-full bg-crimson text-white hover:bg-crimson-dark shadow-lg py-3 text-sm rounded-sm"
-            >
-              ПЕРЕЙТИ В КОРЗИНУ
-            </Link>
-            <Link
               href="/checkout"
               onClick={onClose}
-              className="btn-base w-full border-2 border-espresso text-espresso hover:bg-espresso hover:text-cream py-3 text-sm rounded-sm"
+              className="btn-base w-full bg-crimson text-white hover:bg-crimson-dark shadow-lg py-3 text-sm rounded-sm"
             >
               ОФОРМИТЬ ЗАКАЗ
             </Link>
