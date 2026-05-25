@@ -67,7 +67,9 @@ function parseFirebaseError(err: unknown): string {
   if (code === 'auth/too-many-requests')
     return 'Слишком много попыток. Попробуйте позже или сбросьте пароль';
   if (code === 'auth/network-request-failed')
-    return 'Ошибка сети. Проверьте подключение к интернету';
+    return 'Ошибка соединения с Firebase. Попробуйте ещё раз или свяжитесь с поддержкой';
+  if (code === 'auth/unauthorized-domain')
+    return 'Домен не авторизован в Firebase. Свяжитесь с поддержкой';
   if (code === 'auth/user-disabled')
     return 'Аккаунт заблокирован. Свяжитесь с поддержкой';
   if (code === 'auth/email-already-in-use')
