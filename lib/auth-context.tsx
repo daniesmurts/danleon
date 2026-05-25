@@ -17,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isSubscribed: boolean;
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   logOut: () => Promise<void>;
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAdmin(tokenResult.claims['role'] === 'admin');
       } else {
         setIsAdmin(false);
+        setIsSubscribed(false);
       }
 
       // Sync session cookie with server
@@ -50,6 +53,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ uid: firebaseUser.uid }),
         });
+        // Check subscription status (cookie must be set first)
+        fetch('/api/user/subscription')
+          .then((r) => r.json())
+          .then((d) => setIsSubscribed(d.isSubscribed === true))
+          .catch(() => setIsSubscribed(false));
       } else {
         await fetch('/api/auth/session', { method: 'DELETE' });
       }
@@ -84,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, signUp, signIn, logOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, isSubscribed, signUp, signIn, logOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
