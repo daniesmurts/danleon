@@ -7,6 +7,74 @@ import { useAuth } from '@/lib/auth-context';
 
 type Tab = 'signin' | 'signup';
 
+function EyeIcon({ open }: { open: boolean }) {
+  return open ? (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ) : (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+    </svg>
+  );
+}
+
+function PasswordInput({
+  value,
+  onChange,
+  autoComplete,
+  autoFocus,
+  required = true,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  autoFocus?: boolean;
+  required?: boolean;
+}) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        autoFocus={autoFocus}
+        autoComplete={autoComplete}
+        className="w-full px-4 py-3 pr-11 border border-espresso/20 text-espresso font-body text-sm focus:outline-none focus:border-espresso"
+      />
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={() => setShow((s) => !s)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-espresso/40 hover:text-espresso transition-colors"
+        aria-label={show ? 'Скрыть пароль' : 'Показать пароль'}
+      >
+        <EyeIcon open={show} />
+      </button>
+    </div>
+  );
+}
+
+function parseFirebaseError(err: unknown): string {
+  const code = (err as { code?: string })?.code ?? '';
+  if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found')
+    return 'Неверный email или пароль';
+  if (code === 'auth/invalid-email')
+    return 'Некорректный формат email';
+  if (code === 'auth/too-many-requests')
+    return 'Слишком много попыток. Попробуйте позже или сбросьте пароль';
+  if (code === 'auth/network-request-failed')
+    return 'Ошибка сети. Проверьте подключение к интернету';
+  if (code === 'auth/user-disabled')
+    return 'Аккаунт заблокирован. Свяжитесь с поддержкой';
+  if (code === 'auth/email-already-in-use')
+    return 'Этот email уже зарегистрирован';
+  return 'Что-то пошло не так. Попробуйте ещё раз';
+}
+
 export default function AccountLoginPage() {
   const { signIn, signUp } = useAuth();
   const router = useRouter();
@@ -37,8 +105,8 @@ export default function AccountLoginPage() {
       await signIn(email, password);
       router.push(redirect);
       router.refresh();
-    } catch {
-      setError('Неверный email или пароль');
+    } catch (err) {
+      setError(parseFirebaseError(err));
     } finally {
       setLoading(false);
     }
@@ -64,12 +132,8 @@ export default function AccountLoginPage() {
       await signUp(signupEmail, signupPassword, firstName, lastName);
       router.push(redirect);
       router.refresh();
-    } catch (err: unknown) {
-      if (err instanceof Error && err.message.includes('email-already-in-use')) {
-        setError('Этот email уже зарегистрирован');
-      } else {
-        setError('Не удалось создать аккаунт. Попробуйте ещё раз.');
-      }
+    } catch (err) {
+      setError(parseFirebaseError(err));
     } finally {
       setLoading(false);
     }
@@ -116,11 +180,7 @@ export default function AccountLoginPage() {
               </div>
               <div>
                 <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-1">Пароль</label>
-                <input
-                  type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  required autoComplete="current-password"
-                  className="w-full px-4 py-3 border border-espresso/20 text-espresso font-body text-sm focus:outline-none focus:border-espresso"
-                />
+                <PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />
               </div>
               <button
                 type="submit" disabled={loading}
@@ -128,13 +188,12 @@ export default function AccountLoginPage() {
               >
                 {loading ? 'ВХОД...' : 'ВОЙТИ'}
               </button>
-              <button
-                type="button"
-                onClick={() => { setTab('signup'); setError(''); }}
+              <Link
+                href="/account/reset-password"
                 className="text-center text-xs font-body text-espresso/40 hover:text-espresso/70 transition-colors"
               >
-                Забыли пароль? Напишите нам на почту.
-              </button>
+                Забыли пароль?
+              </Link>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="flex flex-col gap-4">
@@ -166,19 +225,11 @@ export default function AccountLoginPage() {
               </div>
               <div>
                 <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-1">Пароль</label>
-                <input
-                  type="password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)}
-                  required autoComplete="new-password"
-                  className="w-full px-4 py-3 border border-espresso/20 text-espresso font-body text-sm focus:outline-none focus:border-espresso"
-                />
+                <PasswordInput value={signupPassword} onChange={setSignupPassword} autoComplete="new-password" />
               </div>
               <div>
                 <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-1">Повторите пароль</label>
-                <input
-                  type="password" value={signupPassword2} onChange={(e) => setSignupPassword2(e.target.value)}
-                  required autoComplete="new-password"
-                  className="w-full px-4 py-3 border border-espresso/20 text-espresso font-body text-sm focus:outline-none focus:border-espresso"
-                />
+                <PasswordInput value={signupPassword2} onChange={setSignupPassword2} autoComplete="new-password" />
               </div>
               {/* TOS checkbox */}
               <label className="flex items-start gap-3 cursor-pointer group mt-1">
