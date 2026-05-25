@@ -31,14 +31,29 @@ export async function createOrder(
   const userId = cookieStore.get('user_session')?.value ?? null;
 
   const totalPrice = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const deliveryCost = DELIVERY_PRICES[formData.deliveryMethod] ?? 0;
+
+  // Check subscription server-side so we can't be fooled by client state.
+  // Subscribers always get free delivery (courier in Kazan, yandex_market elsewhere, pickup always).
+  let deliveryCost = DELIVERY_PRICES[formData.deliveryMethod] ?? 0;
+  if (userId && deliveryCost > 0) {
+    try {
+      const db = adminDb();
+      const subSnap = await db.collection('subscriptions')
+        .where('userId', '==', userId)
+        .where('status', '==', 'active')
+        .limit(1)
+        .get();
+      if (!subSnap.empty) deliveryCost = 0;
+    } catch { /* non-fatal — keep computed cost */ }
+  }
+
   const grandTotal = totalPrice + deliveryCost;
 
   const orderId = `DL-${Date.now()}`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
   try {
-    const db = adminDb();
+    const db = adminDb(); // already initialised above for sub check; calling again is a no-op
 
     // 1. Create order in Firestore with pending status
     const orderRef = await db.collection('orders').add({
