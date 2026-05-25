@@ -4,18 +4,20 @@ import { useEffect, useState } from 'react';
 import { adminGetAll, adminUpdate } from '@/lib/admin-api';
 import type { SubscriptionStatus, SubscriptionFrequency } from '@/lib/types';
 
-const STATUS_LABEL: Record<SubscriptionStatus, string> = {
+const STATUS_LABEL: Record<string, string> = {
   pending_payment: 'Ожидает оплаты',
   active: 'Активна',
   paused: 'На паузе',
   cancelled: 'Отменена',
+  past_due: 'Просрочена',
 };
 
-const STATUS_COLOR: Record<SubscriptionStatus, string> = {
+const STATUS_COLOR: Record<string, string> = {
   pending_payment: 'bg-yellow-100 text-yellow-800',
   active: 'bg-green-100 text-green-800',
   paused: 'bg-yellow-100 text-yellow-800',
   cancelled: 'bg-gray-100 text-gray-600',
+  past_due: 'bg-red-100 text-red-700',
 };
 
 const FREQ_LABEL: Record<SubscriptionFrequency, string> = {
@@ -56,7 +58,7 @@ export default function AdminSubscriptionsPage() {
 
   const counts = {
     active: subs.filter((s) => s.status === 'active').length,
-    paused: subs.filter((s) => s.status === 'paused' || s.status === 'pending_payment').length,
+    paused: subs.filter((s) => s.status === 'paused' || s.status === 'pending_payment' || s.status === 'past_due').length,
     all: subs.length,
   };
 

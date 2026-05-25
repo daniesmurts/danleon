@@ -43,6 +43,7 @@ export async function createSubscriptionPayment(
       amount: SUBSCRIPTION_FEE * 100,
       description: `Подписка ДАНЛЕОН — 99 ₽ / ${frequency === 'biweekly' ? '2 недели' : 'месяц'}`,
       customerEmail: userEmail,
+      recurrent: true,  // tells TBank to save the card and return a RebillId
       successUrl: `${appUrl}/account/subscription/success?docId=${docRef.id}&subId=${subId}`,
       failUrl: `${appUrl}/account/subscription?payment=failed`,
       notificationUrl: `${appUrl}/api/tbank/webhook`,

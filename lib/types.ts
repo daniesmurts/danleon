@@ -63,6 +63,7 @@ export interface Subscription {
   frequency: SubscriptionFrequency;
   unitPrice: number;          // monthly fee in rub (99)
   nextBillingDate: string;    // ISO date of next charge
+  rebillId?: string;          // TBank RebillId — set after first successful payment
   createdAt: string;
   updatedAt: string;
 }
