@@ -231,10 +231,10 @@ export default function ContactPage() {
                     Телефон
                   </h4>
                   <a
-                    href="tel:+74951234567"
+                    href="tel:+79179040998"
                     className="font-body text-espresso/70 hover:text-crimson transition-colors duration-300"
                   >
-                    +7 (495) 123-45-67
+                    +7 (917) 904-09-98
                   </a>
                 </div>
               </div>
@@ -261,10 +261,10 @@ export default function ContactPage() {
                     Email
                   </h4>
                   <a
-                    href="mailto:info@danleon.ru"
+                    href="mailto:daniel@boadtech.com"
                     className="font-body text-espresso/70 hover:text-crimson transition-colors duration-300"
                   >
-                    info@danleon.ru
+                    daniel@boadtech.com
                   </a>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export default function ContactPage() {
                     Адрес
                   </h4>
                   <p className="font-body text-espresso/70">
-                    Москва, ул. Кофейная, д. 1
+                  
                   </p>
                 </div>
               </div>
