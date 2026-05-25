@@ -147,15 +147,18 @@ export default function AdminStatsPage() {
   const packsLast7  = packsInWindow(7);
   const packsLast30 = packsInWindow(30);
 
-  // Daily rate: use 30-day rolling average (stable); fall back to all-time if fewer than 30 days of data
+  // Daily rate: use 30-day rolling window, but divide by actual elapsed days (not always 30)
+  // when the store is young to avoid underestimating the rate.
+  // Floor at 7 days to smooth single-day spikes.
   const oldestTs = paidOrders.reduce((min, o) => {
     const ts = (o.createdAt as { seconds: number } | undefined)?.seconds;
     return ts ? Math.min(min, ts * 1000) : min;
   }, nowMs);
   const daysSinceFirst = Math.max(1, (nowMs - oldestTs) / MS_PER_DAY);
-  const windowDays = Math.min(daysSinceFirst, 30);
-  const currentDailyKg    = kgLast30    / Math.max(windowDays, 30);
-  const currentDailyPacks = packsLast30 / Math.max(windowDays, 30);
+  const windowDays        = Math.min(daysSinceFirst, 30);  // actual days we have data for
+  const effectiveWindow   = Math.max(windowDays, 7);       // floor at 7 to smooth early noise
+  const currentDailyKg    = kgLast30    / effectiveWindow;
+  const currentDailyPacks = packsLast30 / effectiveWindow;
 
   // Stock in kg from inventory (unit: кг, or г/гр converted)
   const stockKg = inventory.reduce((s, item) => {
@@ -165,10 +168,15 @@ export default function AdminStatsPage() {
     return s;
   }, 0);
 
-  // 6-month target pace
-  const TARGET_DAYS = 182;
-  const requiredDailyKg  = stockKg > 0 ? stockKg / TARGET_DAYS : 0;
-  const requiredWeeklyKg = requiredDailyKg * 7;
+  // 6-month target pace anchored to the batch purchase date (not rolling from today).
+  // This means the required daily rate INCREASES as the deadline approaches.
+  const BATCH_TARGET_DAYS = 182;
+  const batchTs = (latestBatch?.createdAt as { seconds: number } | undefined)?.seconds;
+  const batchStartMs  = batchTs ? batchTs * 1000 : nowMs;
+  const batchDeadlineMs = batchStartMs + BATCH_TARGET_DAYS * MS_PER_DAY;
+  const daysRemaining = Math.max(1, (batchDeadlineMs - nowMs) / MS_PER_DAY);
+  const requiredDailyKg   = stockKg > 0 ? stockKg / daysRemaining : 0;
+  const requiredWeeklyKg  = requiredDailyKg * 7;
   const requiredMonthlyKg = requiredDailyKg * 30;
 
   // Projected sell-out date at current rate
@@ -378,7 +386,9 @@ export default function AdminStatsPage() {
                   <div key={label} className="border border-espresso/10 p-3">
                     <p className="font-heading text-[10px] uppercase tracking-wide text-espresso/40 mb-1">{label}</p>
                     <p className="font-heading font-bold text-base text-espresso">{value}</p>
-                    <p className="font-body text-[10px] text-espresso/30 mt-0.5">цель — 6 месяцев</p>
+                    <p className="font-body text-[10px] text-espresso/30 mt-0.5">
+                      осталось ~{Math.round(daysRemaining)} дн. из 182
+                    </p>
                   </div>
                 ))}
               </div>
@@ -411,7 +421,9 @@ export default function AdminStatsPage() {
                         ? 'bg-yellow-50 border-yellow-200'
                         : 'bg-red-50 border-red-200'
                   }`}>
-                    <p className="font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Темп vs цель 6 мес.</p>
+                    <p className="font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">
+                      Темп · дедлайн {new Date(batchDeadlineMs).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                    </p>
                     <p className={`font-heading font-black text-xl ${
                       paceRatio >= 1 ? 'text-green-700' : paceRatio >= 0.7 ? 'text-yellow-700' : 'text-red-700'
                     }`}>

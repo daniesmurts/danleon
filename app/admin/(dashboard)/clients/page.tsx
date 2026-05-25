@@ -31,6 +31,7 @@ interface ClientProfile {
   avgIntervalDays: number | null;
   predictedNext: Date | null;
   confidence: 'none' | 'low' | 'medium' | 'high';
+  isSubscribed: boolean;
 }
 
 type SortKey = 'urgency' | 'name' | 'orders' | 'spent' | 'lastOrder';
@@ -55,7 +56,7 @@ function daysDiff(a: Date, b: Date) {
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
-function buildProfile(phone: string, orders: OrderSnapshot[]): ClientProfile {
+function buildProfile(phone: string, orders: OrderSnapshot[], subscribedEmails: Set<string>): ClientProfile {
   const paid  = orders.filter((o) => o.status === 'paid');
   // Use any order (regardless of status) for contact info — the customer may have
   // only pending/cancelled orders but their name is still known.
@@ -80,10 +81,12 @@ function buildProfile(phone: string, orders: OrderSnapshot[]): ClientProfile {
     confidence = dates.length >= 5 ? 'high' : dates.length >= 3 ? 'medium' : 'low';
   }
 
+  const email = first?.customer?.email || '';
+
   return {
     phone,
     name: [first?.customer?.firstName, first?.customer?.lastName].filter(Boolean).join(' ') || '—',
-    email: first?.customer?.email || '',
+    email,
     city:  first?.customer?.city  || '',
     orders: paid.length,
     totalSpent,
@@ -91,6 +94,7 @@ function buildProfile(phone: string, orders: OrderSnapshot[]): ClientProfile {
     avgIntervalDays,
     predictedNext,
     confidence,
+    isSubscribed: email ? subscribedEmails.has(email.toLowerCase()) : false,
   };
 }
 
@@ -136,9 +140,15 @@ export default function AdminClientsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
-    adminGetAll('orders', { orderBy: 'createdAt', dir: 'desc' })
-      .then((docs) => {
+    Promise.all([
+      adminGetAll('orders', { orderBy: 'createdAt', dir: 'desc' }),
+      fetch('/api/admin/subscriber-emails').then((r) => r.ok ? r.json() : []),
+    ])
+      .then(([docs, emails]) => {
         const orders = docs as unknown as OrderSnapshot[];
+        const subscribedEmails = new Set<string>(
+          (emails as string[]).map((e) => e.toLowerCase())
+        );
 
         // Group by phone
         const byPhone = new Map<string, OrderSnapshot[]>();
@@ -149,7 +159,7 @@ export default function AdminClientsPage() {
 
         const profiles = Array.from(byPhone.entries())
           .filter(([phone]) => phone !== '__unknown__')
-          .map(([phone, orders]) => buildProfile(phone, orders));
+          .map(([phone, orders]) => buildProfile(phone, orders, subscribedEmails));
 
         setClients(profiles);
         setLoading(false);
@@ -180,9 +190,10 @@ export default function AdminClientsPage() {
   });
 
   // Summary counts
-  const writeNow  = clients.filter((c) => clientStatus(c) === 'write-now').length;
-  const soon      = clients.filter((c) => clientStatus(c) === 'soon').length;
-  const repeat    = clients.filter((c) => c.orders >= 2).length;
+  const writeNow   = clients.filter((c) => clientStatus(c) === 'write-now').length;
+  const soon       = clients.filter((c) => clientStatus(c) === 'soon').length;
+  const repeat     = clients.filter((c) => c.orders >= 2).length;
+  const subscribed = clients.filter((c) => c.isSubscribed).length;
 
   const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
     <button
@@ -206,16 +217,17 @@ export default function AdminClientsPage() {
       <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase mb-6">Клиенты</h1>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {[
-          { label: 'Всего клиентов',    value: clients.length,  sub: ''                       },
-          { label: 'Повторных',         value: repeat,          sub: '2+ заказа'              },
-          { label: 'Написать сейчас',   value: writeNow,        sub: 'просрочено',   red: true },
-          { label: 'Скоро (7 дней)',    value: soon,            sub: 'предстоит',  amber: true },
-        ].map(({ label, value, sub, red, amber }) => (
+          { label: 'Всего клиентов',    value: clients.length,  sub: ''                          },
+          { label: 'Подписчики',        value: subscribed,      sub: 'активная подписка', green: true },
+          { label: 'Повторных',         value: repeat,          sub: '2+ заказа'                 },
+          { label: 'Написать сейчас',   value: writeNow,        sub: 'просрочено',      red: true },
+          { label: 'Скоро (7 дней)',    value: soon,            sub: 'предстоит',     amber: true },
+        ].map(({ label, value, sub, red, amber, green }) => (
           <div key={label} className="bg-white border border-cream/40 p-5">
             <p className="font-heading text-xs uppercase tracking-wide text-espresso/50 mb-2">{label}</p>
-            <p className={`font-heading font-black text-2xl ${red && value > 0 ? 'text-crimson' : amber && value > 0 ? 'text-yellow-600' : 'text-espresso'}`}>
+            <p className={`font-heading font-black text-2xl ${red && value > 0 ? 'text-crimson' : amber && value > 0 ? 'text-yellow-600' : green && value > 0 ? 'text-green-600' : 'text-espresso'}`}>
               {value}
             </p>
             {sub && <p className="font-body text-xs text-espresso/40 mt-0.5">{sub}</p>}
@@ -253,6 +265,7 @@ export default function AdminClientsPage() {
             <thead>
               <tr className="border-b border-cream/40 bg-[#F9F9F9]">
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Клиент</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden sm:table-cell">Подписка</th>
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden md:table-cell">Город</th>
                 <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Заказов</th>
                 <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden sm:table-cell">Потрачено</th>
@@ -281,6 +294,18 @@ export default function AdminClientsPage() {
                         <p className="font-body text-xs text-espresso/50 mt-0.5">{client.phone}</p>
                         {client.email && (
                           <p className="font-body text-xs text-espresso/40">{client.email}</p>
+                        )}
+                      </td>
+
+                      {/* Subscription badge */}
+                      <td className="px-4 py-3.5 hidden sm:table-cell">
+                        {client.isSubscribed ? (
+                          <span className="inline-flex items-center gap-1 font-heading text-[10px] font-bold uppercase tracking-wide px-2 py-1 bg-green-50 text-green-700 border border-green-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                            Подписчик
+                          </span>
+                        ) : (
+                          <span className="font-body text-xs text-espresso/25">—</span>
                         )}
                       </td>
 
@@ -347,7 +372,7 @@ export default function AdminClientsPage() {
                     {/* Expanded: order history timeline */}
                     {isOpen && (
                       <tr className="bg-[#F9F9F9]">
-                        <td colSpan={8} className="px-6 py-4">
+                        <td colSpan={9} className="px-6 py-4">
                           <div className="flex items-center justify-between mb-3">
                             <p className="font-heading text-xs font-bold uppercase tracking-widest text-espresso/60">
                               История заказов — {client.name}
