@@ -48,6 +48,9 @@ export default function SubscriptionPage() {
     Promise.all([fetchSubscriptions(), getAllProducts()]).then(([, prods]) => {
       setProducts(prods);
       setLoading(false);
+    }).catch((err) => {
+      console.error('Subscription page load error:', err);
+      setLoading(false);
     });
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -61,7 +64,7 @@ export default function SubscriptionPage() {
       product.id,
       product.name,
       product.image ?? '',
-      product.subscriptionPrice ?? product.price,
+      bestSubPrice(product),
       frequency,
       user.email ?? '',
     );
@@ -80,6 +83,12 @@ export default function SubscriptionPage() {
   };
 
   const activeSubscriptions = subscriptions.filter((s) => s.status !== 'cancelled');
+
+  // Best available subscription price for a product: try sub prices first, then retail,
+  // smallest pack first. Returns 0 if truly no price is configured.
+  function bestSubPrice(p: Product): number {
+    return p.subscriptionPrice ?? p.price ?? p.subscriptionPrice500 ?? p.price500 ?? 0;
+  }
 
   return (
     <div className="space-y-6">
@@ -122,7 +131,7 @@ export default function SubscriptionPage() {
                   </div>
                   <div className="mt-3 flex items-center gap-3 flex-wrap">
                     <p className="font-body text-xs text-espresso/50">
-                      Следующая доставка: <span className="font-bold text-espresso">{new Date(sub.nextDeliveryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</span>
+                      Следующая доставка: <span className="font-bold text-espresso">{sub.nextDeliveryDate ? new Date(sub.nextDeliveryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : '—'}</span>
                     </p>
                     <span className="text-espresso/20">·</span>
                     <p className="font-heading font-bold text-sm text-crimson">{sub.unitPrice?.toLocaleString('ru-RU')} ₽/мес</p>
@@ -161,8 +170,8 @@ export default function SubscriptionPage() {
                     >
                       <p className="font-heading text-xs font-bold text-espresso uppercase tracking-wide">{p.name}</p>
                       <p className="font-body text-xs text-espresso/50 mt-0.5">
-                        {(p.subscriptionPrice ?? p.price).toLocaleString('ru-RU')} ₽
-                        {p.subscriptionPrice && <span className="text-crimson ml-1">(при подписке)</span>}
+                        {bestSubPrice(p).toLocaleString('ru-RU')} ₽
+                        {(p.subscriptionPrice || p.subscriptionPrice500) && <span className="text-crimson ml-1">(при подписке)</span>}
                       </p>
                     </button>
                   ))}
