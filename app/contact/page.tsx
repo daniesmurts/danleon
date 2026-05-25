@@ -14,6 +14,7 @@ export default function ContactPage() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -21,15 +22,28 @@ export default function ContactPage() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSending(true);
-    // Simulate network request
-    setTimeout(() => {
+    setError('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Ошибка отправки. Попробуйте позже.');
+      } else {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      }
+    } catch {
+      setError('Ошибка соединения. Проверьте интернет и попробуйте ещё раз.');
+    } finally {
       setSending(false);
-      setSubmitted(true);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 800);
+    }
   }
 
   const inputClasses =
@@ -166,6 +180,12 @@ export default function ContactPage() {
                       className={`${inputClasses} resize-none`}
                     />
                   </div>
+
+                  {error && (
+                    <p className="mb-4 font-body text-sm text-crimson bg-crimson/5 border border-crimson/20 px-4 py-3">
+                      {error}
+                    </p>
+                  )}
 
                   <Button
                     type="submit"

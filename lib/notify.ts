@@ -281,6 +281,30 @@ export async function notifyAdminCronSummary(params: {
   await sendToAdmin(title, html);
 }
 
+/** Admin: contact form message */
+export async function notifyAdminContactMessage(params: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const { name, email, subject, message } = params;
+  const html = wrapAdmin('Новое сообщение с сайта', '#2563eb', `
+    ${h1('Новое сообщение с сайта', '#2563eb')}
+    ${sub(`Отправлено через форму обратной связи.`)}
+    ${tbl(
+      row('Имя',    name  || '—'),
+      row('Email',  email || '—'),
+      row('Тема',   subject || '—'),
+    )}
+    <div style="margin:16px 0;padding:16px;background:#f9f9f9;border-left:3px solid #2563eb;">
+      <p style="margin:0;font-family:Georgia,serif;font-size:14px;color:#2c1a0e;line-height:1.7;white-space:pre-wrap;">${message.replace(/</g, '&lt;')}</p>
+    </div>
+    ${email ? btn('Ответить', `mailto:${email}`, '#2563eb') : ''}
+  `);
+  await sendToAdmin(`Новое сообщение: ${subject || '(без темы)'}`, html);
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  USER NOTIFICATIONS
 // ══════════════════════════════════════════════════════════════════════════════
