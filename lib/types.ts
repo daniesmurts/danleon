@@ -60,14 +60,9 @@ export interface Subscription {
   id: string;
   userId: string;
   status: SubscriptionStatus;
-  productId: string;
-  productName: string;
-  productImage: string;
-  grind: GrindType;
-  weight: number;
   frequency: SubscriptionFrequency;
-  unitPrice: number;
-  nextDeliveryDate: string;
+  unitPrice: number;          // monthly fee in rub (99)
+  nextBillingDate: string;    // ISO date of next charge
   createdAt: string;
   updatedAt: string;
 }

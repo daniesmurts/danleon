@@ -1,12 +1,12 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { initPayment } from '@/lib/tbank';
-import type { GrindType, SubscriptionFrequency } from '@/lib/types';
+import { adminDb } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
+import type { SubscriptionFrequency } from '@/lib/types';
 
-const SUBSCRIPTION_FEE = 99; // rub/month
+const SUBSCRIPTION_FEE = 99; // ₽/month
 
 export interface CreateSubscriptionResult {
   error?: string;
@@ -14,10 +14,6 @@ export interface CreateSubscriptionResult {
 }
 
 export async function createSubscriptionPayment(
-  productId: string,
-  productName: string,
-  productImage: string,
-  unitPrice: number,
   frequency: SubscriptionFrequency,
   userEmail: string,
 ): Promise<CreateSubscriptionResult> {
@@ -28,31 +24,24 @@ export async function createSubscriptionPayment(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
   const subId = `SUB-${Date.now()}`;
 
-  const nextDelivery = new Date();
-  nextDelivery.setDate(nextDelivery.getDate() + (frequency === 'biweekly' ? 14 : 30));
+  const nextBilling = new Date();
+  nextBilling.setDate(nextBilling.getDate() + (frequency === 'biweekly' ? 14 : 30));
 
   try {
-    // Create pending subscription doc
-    const docRef = await addDoc(collection(db, 'subscriptions'), {
+    const docRef = await adminDb().collection('subscriptions').add({
       userId,
       status: 'pending_payment',
-      productId,
-      productName,
-      productImage,
-      grind: 'зерно' as GrindType,
-      weight: 250,
       frequency,
-      unitPrice,
-      nextDeliveryDate: nextDelivery.toISOString(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      unitPrice: SUBSCRIPTION_FEE,
+      nextBillingDate: nextBilling.toISOString(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
-    // Initiate TBank payment for the 99₽ membership fee
     const tbank = await initPayment({
       orderId: subId,
-      amount: SUBSCRIPTION_FEE * 100, // kopecks
-      description: `Подписка ДАНЛЕОН — членский взнос 1 месяц`,
+      amount: SUBSCRIPTION_FEE * 100,
+      description: `Подписка ДАНЛЕОН — 99 ₽ / ${frequency === 'biweekly' ? '2 недели' : 'месяц'}`,
       customerEmail: userEmail,
       successUrl: `${appUrl}/account/subscription/success?docId=${docRef.id}&subId=${subId}`,
       failUrl: `${appUrl}/account/subscription?payment=failed`,

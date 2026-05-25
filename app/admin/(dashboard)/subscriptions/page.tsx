@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { adminGetAll, adminUpdate } from '@/lib/admin-api';
-import Image from 'next/image';
 import type { SubscriptionStatus, SubscriptionFrequency } from '@/lib/types';
 
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
@@ -63,7 +62,7 @@ export default function AdminSubscriptionsPage() {
 
   const monthlyRevenue = subs
     .filter((s) => s.status === 'active')
-    .reduce((sum, s) => sum + 99, 0);
+    .reduce((sum, s) => sum + ((s.unitPrice as number) || 99), 0);
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -110,10 +109,10 @@ export default function AdminSubscriptionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-cream/40 bg-[#F9F9F9]">
-                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Товар</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Подписка</th>
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Клиент</th>
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Периодичность</th>
-                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Следующая отправка</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Следующее списание</th>
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase">Статус</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -122,21 +121,15 @@ export default function AdminSubscriptionsPage() {
               {filtered.map((sub) => (
                 <tr key={sub.docId as string} className="hover:bg-[#FAFAFA] transition-colors">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {!!sub.productImage && (
-                        <div className="relative w-8 h-8 bg-[#F5F5F5] shrink-0">
-                          <Image src={sub.productImage as string} alt={sub.productName as string} fill className="object-contain p-0.5" />
-                        </div>
-                      )}
-                      <span className="font-heading font-bold text-espresso text-xs tracking-wide">{sub.productName as string}</span>
-                    </div>
+                    <span className="font-heading font-bold text-espresso text-xs tracking-wide">Подписка ДАНЛЕОН</span>
+                    <span className="ml-2 font-body text-espresso/40 text-xs">{(sub.unitPrice as number) || 99} ₽</span>
                   </td>
-                  <td className="px-4 py-3 font-body text-espresso/60 text-xs font-mono">{(sub.userId as string)?.slice(0, 12)}…</td>
+                  <td className="px-4 py-3 font-body text-espresso/60 text-xs font-mono">{(sub.userId as string)?.slice(0, 14)}…</td>
                   <td className="px-4 py-3 font-body text-espresso/60 text-xs">
                     {FREQ_LABEL[sub.frequency as SubscriptionFrequency] ?? sub.frequency as string}
                   </td>
                   <td className="px-4 py-3 font-body text-espresso/60 text-xs">
-                    {sub.nextDeliveryDate ? formatDate(sub.nextDeliveryDate as string) : '—'}
+                    {(sub.nextBillingDate || sub.nextDeliveryDate) ? formatDate((sub.nextBillingDate || sub.nextDeliveryDate) as string) : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-heading font-bold uppercase tracking-wide ${STATUS_COLOR[sub.status as SubscriptionStatus]}`}>

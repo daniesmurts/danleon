@@ -2,24 +2,34 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { getAllProducts } from '@/lib/sanity';
 import { createSubscriptionPayment } from '@/app/actions/subscription';
-import type { Subscription, SubscriptionStatus, Product } from '@/lib/types';
+import type { Subscription, SubscriptionStatus } from '@/lib/types';
 
 const FREQ_LABEL = { biweekly: 'Раз в 2 недели', monthly: 'Раз в месяц' };
+
 const STATUS_LABEL: Record<SubscriptionStatus, string> = {
-  pending_payment: 'Ожидает оплаты', active: 'Активна', paused: 'Приостановлена', cancelled: 'Отменена',
-};
-const STATUS_COLOR: Record<SubscriptionStatus, string> = {
-  pending_payment: 'bg-yellow-100 text-yellow-800', active: 'bg-green-100 text-green-800',
-  paused: 'bg-yellow-100 text-yellow-800', cancelled: 'bg-gray-100 text-gray-600',
+  pending_payment: 'Ожидает оплаты',
+  active: 'Активна',
+  paused: 'Приостановлена',
+  cancelled: 'Отменена',
 };
 
+const STATUS_COLOR: Record<SubscriptionStatus, string> = {
+  pending_payment: 'bg-yellow-100 text-yellow-800',
+  active: 'bg-green-100 text-green-800',
+  paused: 'bg-yellow-100 text-yellow-800',
+  cancelled: 'bg-gray-100 text-gray-600',
+};
+
+const BENEFITS = [
+  'Скидка на всё кофе по подписочным ценам',
+  'Заказывайте любой объём в любое время',
+  'Приоритетная обработка заказов',
+];
 
 export default function SubscriptionPage() {
   const { user } = useAuth();
@@ -27,53 +37,35 @@ export default function SubscriptionPage() {
   const paymentFailed = searchParams.get('payment') === 'failed';
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
-  const [formError, setFormError] = useState('');
-
-  // New subscription form state
-  const [selectedProduct, setSelectedProduct] = useState('');
   const [frequency, setFrequency] = useState<'biweekly' | 'monthly'>('monthly');
   const [saving, setSaving] = useState(false);
-
-  const fetchSubscriptions = async () => {
-    if (!user) return;
-    const snap = await getDocs(query(collection(db, 'subscriptions'), where('userId', '==', user.uid)));
-    setSubscriptions(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Subscription)));
-  };
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!user) return;
-    Promise.all([fetchSubscriptions(), getAllProducts()]).then(([, prods]) => {
-      setProducts(prods);
-      setLoading(false);
-    }).catch((err) => {
-      console.error('Subscription page load error:', err);
-      setLoading(false);
-    });
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    getDocs(query(collection(db, 'subscriptions'), where('userId', '==', user.uid)))
+      .then((snap) => {
+        setSubscriptions(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Subscription)));
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load subscriptions:', err);
+        setLoading(false);
+      });
+  }, [user]);
 
   const handleCreate = async () => {
-    if (!user || !selectedProduct) return;
-    const product = products.find((p) => p.id === selectedProduct);
-    if (!product) return;
+    if (!user) return;
     setSaving(true);
     setFormError('');
-    const result = await createSubscriptionPayment(
-      product.id,
-      product.name,
-      product.image ?? '',
-      bestSubPrice(product),
-      frequency,
-      user.email ?? '',
-    );
+    const result = await createSubscriptionPayment(frequency, user.email ?? '');
     if (result.error) {
       setFormError(result.error);
       setSaving(false);
       return;
     }
-    // Redirect to TBank payment page
     window.location.href = result.paymentUrl!;
   };
 
@@ -82,151 +74,177 @@ export default function SubscriptionPage() {
     setSubscriptions((prev) => prev.map((s) => s.id === subId ? { ...s, status } : s));
   };
 
-  const activeSubscriptions = subscriptions.filter((s) => s.status !== 'cancelled');
-
-  // Best available subscription price for a product: try sub prices first, then retail,
-  // smallest pack first. Returns 0 if truly no price is configured.
-  function bestSubPrice(p: Product): number {
-    return p.subscriptionPrice ?? p.price ?? p.subscriptionPrice500 ?? p.price500 ?? 0;
-  }
+  const activeSub = subscriptions.find((s) => s.status === 'active' || s.status === 'paused' || s.status === 'pending_payment');
 
   return (
     <div className="space-y-6">
       {paymentFailed && (
         <div className="bg-red-50 border border-red-200 px-5 py-4 font-body text-sm text-red-700">
-          Оплата не прошла. Попробуйте ещё раз или выберите другой способ оплаты.
+          Оплата не прошла. Попробуйте ещё раз.
         </div>
       )}
+
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl font-black tracking-widest text-espresso uppercase">Подписка</h1>
-        {activeSubscriptions.length === 0 && !showNew && (
-          <button onClick={() => setShowNew(true)} className="bg-crimson hover:bg-crimson-dark text-white font-heading font-bold uppercase tracking-widest text-xs px-5 py-2.5 transition-colors">
+        {!activeSub && !showNew && !loading && (
+          <button
+            onClick={() => setShowNew(true)}
+            className="bg-crimson hover:bg-crimson-dark text-white font-heading font-bold uppercase tracking-widest text-xs px-5 py-2.5 transition-colors"
+          >
             + Оформить
           </button>
         )}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><div className="w-5 h-5 border-2 border-espresso/20 border-t-espresso rounded-full animate-spin" /></div>
-      ) : (
-        <>
-          {/* Existing subscriptions */}
-          {activeSubscriptions.map((sub) => (
-            <div key={sub.id} className="bg-white border border-cream/40 p-6">
-              <div className="flex items-start gap-4">
-                {sub.productImage && (
-                  <div className="relative w-16 h-16 shrink-0 bg-[#F5F5F5]">
-                    <Image src={sub.productImage} alt={sub.productName} fill className="object-contain p-1" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 flex-wrap">
-                    <div>
-                      <h3 className="font-heading text-sm font-bold text-espresso uppercase tracking-widest">{sub.productName}</h3>
-                      <p className="font-body text-xs text-espresso/50 mt-0.5">Зерно · 250г · {FREQ_LABEL[sub.frequency]}</p>
-                    </div>
-                    <span className={`text-[10px] font-heading font-bold uppercase px-2.5 py-1 rounded-full ${STATUS_COLOR[sub.status]}`}>
-                      {STATUS_LABEL[sub.status]}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3 flex-wrap">
-                    <p className="font-body text-xs text-espresso/50">
-                      Следующая доставка: <span className="font-bold text-espresso">{sub.nextDeliveryDate ? new Date(sub.nextDeliveryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) : '—'}</span>
-                    </p>
-                    <span className="text-espresso/20">·</span>
-                    <p className="font-heading font-bold text-sm text-crimson">{sub.unitPrice?.toLocaleString('ru-RU')} ₽/мес</p>
-                  </div>
-                  <div className="mt-4 flex gap-2 flex-wrap">
-                    {sub.status === 'active' && (
-                      <button onClick={() => handleStatusChange(sub.id, 'paused')} className="font-heading text-[10px] uppercase tracking-widest border border-espresso/20 px-4 py-2 hover:border-espresso transition-colors">
-                        Приостановить
-                      </button>
-                    )}
-                    {sub.status === 'paused' && (
-                      <button onClick={() => handleStatusChange(sub.id, 'active')} className="font-heading text-[10px] uppercase tracking-widest bg-espresso text-cream px-4 py-2 hover:bg-espresso/90 transition-colors">
-                        Возобновить
-                      </button>
-                    )}
-                    <button onClick={() => handleStatusChange(sub.id, 'cancelled')} className="font-heading text-[10px] uppercase tracking-widest text-espresso/30 hover:text-crimson transition-colors px-2 py-2">
-                      Отменить
-                    </button>
-                  </div>
-                </div>
-              </div>
+        <div className="flex justify-center py-12">
+          <div className="w-5 h-5 border-2 border-espresso/20 border-t-espresso rounded-full animate-spin" />
+        </div>
+      ) : activeSub ? (
+        /* ── Active subscription card ── */
+        <div className="bg-white border border-cream/40 p-6 space-y-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="font-heading text-sm font-bold text-espresso uppercase tracking-widest">Подписка ДАНЛЕОН</h2>
+              <p className="font-body text-xs text-espresso/50 mt-1">{FREQ_LABEL[activeSub.frequency]} · {activeSub.unitPrice} ₽</p>
             </div>
-          ))}
+            <span className={`text-[10px] font-heading font-bold uppercase px-2.5 py-1 rounded-full ${STATUS_COLOR[activeSub.status]}`}>
+              {STATUS_LABEL[activeSub.status]}
+            </span>
+          </div>
 
-          {/* New subscription form */}
-          {showNew && (
-            <div className="bg-white border border-cream/40 p-6 space-y-5">
-              <h2 className="font-heading text-sm font-bold tracking-widest uppercase text-espresso">Новая подписка</h2>
-
-              <div>
-                <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-2">Выберите кофе</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {products.map((p) => (
-                    <button key={p.id} onClick={() => setSelectedProduct(p.id)}
-                      className={`text-left p-3 border transition-colors ${selectedProduct === p.id ? 'border-espresso bg-cream/10' : 'border-espresso/20 hover:border-espresso/40'}`}
-                    >
-                      <p className="font-heading text-xs font-bold text-espresso uppercase tracking-wide">{p.name}</p>
-                      <p className="font-body text-xs text-espresso/50 mt-0.5">
-                        {bestSubPrice(p).toLocaleString('ru-RU')} ₽
-                        {(p.subscriptionPrice || p.subscriptionPrice500) && <span className="text-crimson ml-1">(при подписке)</span>}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-2">Периодичность</label>
-                <div className="flex gap-3">
-                  {(['biweekly', 'monthly'] as const).map((f) => (
-                    <button key={f} onClick={() => setFrequency(f)}
-                      className={`flex-1 py-2.5 text-[10px] font-heading font-bold uppercase tracking-widest border transition-colors ${frequency === f ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'}`}
-                    >
-                      {FREQ_LABEL[f]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {formError && <p className="font-body text-xs text-red-600">{formError}</p>}
-              <div className="flex gap-3 pt-2">
-                <button onClick={handleCreate} disabled={!selectedProduct || saving}
-                  className="flex-1 bg-crimson hover:bg-crimson-dark disabled:opacity-50 text-white font-heading font-bold uppercase tracking-widest text-xs py-3 transition-colors"
-                >
-                  {saving ? 'Переход к оплате...' : 'Оплатить 99 ₽ и подписаться'}
-                </button>
-                <button onClick={() => setShowNew(false)} className="px-5 border border-espresso/20 font-heading text-xs uppercase tracking-widest text-espresso/50 hover:text-espresso transition-colors">
-                  Отмена
-                </button>
-              </div>
-            </div>
+          {activeSub.nextBillingDate && (
+            <p className="font-body text-xs text-espresso/50">
+              Следующее списание:{' '}
+              <span className="font-bold text-espresso">
+                {new Date(activeSub.nextBillingDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </p>
           )}
 
-          {activeSubscriptions.length === 0 && !showNew && (
-            <div className="bg-white border border-cream/40 p-10 text-center">
-              <p className="font-heading text-sm font-bold text-espresso/30 uppercase tracking-widest mb-2">Подписок нет</p>
-              <p className="font-body text-sm text-espresso/40 mb-6">Оформите подписку и экономьте до 20% на каждом заказе</p>
-              <button onClick={() => setShowNew(true)} className="bg-crimson hover:bg-crimson-dark text-white font-heading font-bold uppercase tracking-widest text-xs px-8 py-3 transition-colors">
-                Оформить подписку
+          <ul className="space-y-1">
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-2 font-body text-xs text-espresso/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-crimson shrink-0" />
+                {b}
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex gap-2 flex-wrap pt-1">
+            {activeSub.status === 'active' && (
+              <button
+                onClick={() => handleStatusChange(activeSub.id, 'paused')}
+                className="font-heading text-[10px] uppercase tracking-widest border border-espresso/20 px-4 py-2 hover:border-espresso transition-colors"
+              >
+                Приостановить
               </button>
+            )}
+            {activeSub.status === 'paused' && (
+              <button
+                onClick={() => handleStatusChange(activeSub.id, 'active')}
+                className="font-heading text-[10px] uppercase tracking-widest bg-espresso text-cream px-4 py-2 hover:bg-espresso/90 transition-colors"
+              >
+                Возобновить
+              </button>
+            )}
+            {activeSub.status !== 'cancelled' && (
+              <button
+                onClick={() => handleStatusChange(activeSub.id, 'cancelled')}
+                className="font-heading text-[10px] uppercase tracking-widest text-espresso/30 hover:text-crimson transition-colors px-2 py-2"
+              >
+                Отменить подписку
+              </button>
+            )}
+          </div>
+        </div>
+      ) : showNew ? (
+        /* ── New subscription form ── */
+        <div className="bg-white border border-cream/40 p-6 space-y-5">
+          <h2 className="font-heading text-sm font-bold tracking-widest uppercase text-espresso">Оформить подписку</h2>
+
+          <ul className="space-y-1.5">
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-2 font-body text-xs text-espresso/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-crimson shrink-0" />
+                {b}
+              </li>
+            ))}
+          </ul>
+
+          <div>
+            <label className="block font-heading text-[10px] uppercase tracking-widest text-espresso/50 mb-2">Периодичность</label>
+            <div className="flex gap-3">
+              {(['monthly', 'biweekly'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFrequency(f)}
+                  className={`flex-1 py-2.5 text-[10px] font-heading font-bold uppercase tracking-widest border transition-colors ${
+                    frequency === f ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
+                  }`}
+                >
+                  {FREQ_LABEL[f]}
+                </button>
+              ))}
             </div>
-          )}
-        </>
+          </div>
+
+          <div className="bg-cream/30 px-4 py-3 flex items-center justify-between">
+            <span className="font-heading text-xs uppercase tracking-widest text-espresso/60">Членский взнос</span>
+            <span className="font-heading font-black text-lg text-espresso">99 ₽</span>
+          </div>
+
+          {formError && <p className="font-body text-xs text-red-600">{formError}</p>}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={handleCreate}
+              disabled={saving}
+              className="flex-1 bg-crimson hover:bg-crimson-dark disabled:opacity-50 text-white font-heading font-bold uppercase tracking-widest text-xs py-3 transition-colors"
+            >
+              {saving ? 'Переход к оплате...' : 'Оплатить 99 ₽'}
+            </button>
+            <button
+              onClick={() => setShowNew(false)}
+              className="px-5 border border-espresso/20 font-heading text-xs uppercase tracking-widest text-espresso/50 hover:text-espresso transition-colors"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* ── Empty state ── */
+        <div className="bg-white border border-cream/40 p-10 text-center space-y-4">
+          <p className="font-heading text-sm font-bold text-espresso/30 uppercase tracking-widest">Подписок нет</p>
+          <ul className="space-y-1.5 inline-block text-left">
+            {BENEFITS.map((b) => (
+              <li key={b} className="flex items-center gap-2 font-body text-xs text-espresso/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-crimson shrink-0" />
+                {b}
+              </li>
+            ))}
+          </ul>
+          <p className="font-body text-sm text-espresso/40">Всего 99 ₽ / месяц</p>
+          <button
+            onClick={() => setShowNew(true)}
+            className="bg-crimson hover:bg-crimson-dark text-white font-heading font-bold uppercase tracking-widest text-xs px-8 py-3 transition-colors"
+          >
+            Оформить подписку
+          </button>
+        </div>
       )}
 
       <div className="bg-[#F5F5F5] p-5 border border-cream/30">
         <p className="font-heading text-[10px] tracking-widest text-espresso/50 uppercase mb-1">Как работает подписка</p>
         <p className="font-body text-xs text-espresso/60 leading-relaxed">
-          Мы автоматически готовим и отправляем ваш кофе в выбранную дату. Вы всегда можете приостановить или отменить подписку за 48 часов до отправки.
+          Оплатите членский взнос 99 ₽ и получите доступ к ценам по подписке на весь ассортимент.
+          Заказывайте любой кофе в любом объёме по сниженным ценам. Отменить можно в любое время.
         </p>
       </div>
 
       <div className="text-center">
         <Link href="/catalog" className="font-heading text-[10px] uppercase tracking-widest text-espresso/40 hover:text-espresso transition-colors">
-          ← Добавить ещё кофе
+          ← В каталог
         </Link>
       </div>
     </div>
