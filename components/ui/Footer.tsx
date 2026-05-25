@@ -56,9 +56,8 @@ export default function Footer() {
               Контакты
             </h4>
             <ul className="space-y-2.5">
-              <li className="text-sm font-body">+7 (495) 123-45-67</li>
-              <li className="text-sm font-body">info@danleon.ru</li>
-              <li className="text-sm font-body">Москва, ул. Кофейная, д. 1</li>
+              <li className="text-sm font-body">+7 917 904-09-98</li>
+              <li className="text-sm font-body">daniel@boadtech.com</li>
               <li className="text-sm font-body text-cream/40 mt-4">Пн–Сб: 9:00 — 21:00</li>
             </ul>
           </div>

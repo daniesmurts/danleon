@@ -61,7 +61,7 @@ export default function Image() {
               textTransform: 'uppercase',
             }}
           >
-            Uganda Coffee
+            Премиальный угандийский кофе
           </div>
         </div>
 
