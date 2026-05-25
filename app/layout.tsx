@@ -25,13 +25,20 @@ export const metadata: Metadata = {
     "свежая обжарка",
     "купить кофе",
   ],
+  metadataBase: new URL("https://danleon.ru"),
   openGraph: {
     title: "ДАНЛЕОН — Премиальный угандийский кофе",
     description:
       "Уникальные сорта специальти кофе из Уганды. Свежая обжарка, прямые поставки.",
+    url: "https://danleon.ru",
     type: "website",
     locale: "ru_RU",
     siteName: "ДАНЛЕОН",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ДАНЛЕОН — Премиальный угандийский кофе",
+    description: "Уникальные сорта специальти кофе из Уганды. Свежая обжарка, прямые поставки.",
   },
 };
 

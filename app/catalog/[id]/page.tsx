@@ -14,7 +14,29 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const product = await getProductBySlug(id);
   if (!product) return {};
-  return { title: `${product.name} — ДАНЛЕОН` };
+
+  const title = `${product.name} — ДАНЛЕОН`;
+  const description = product.description
+    ?? `Специальти кофе из Уганды. ${product.process ? `Обработка: ${product.process}.` : ''} Свежая обжарка, прямые поставки.`;
+  const url = `https://danleon.ru/catalog/${id}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      locale: 'ru_RU',
+      siteName: 'ДАНЛЕОН',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
 }
 
 function RadarChart({ values }: { values: number[] }) {
