@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 // Remove next/font/google due to fetch errors in this environment
 // We will use standard sans-serif fallback for body text.
 
+import Script from "next/script";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { AuthProvider } from "@/lib/auth-context";
@@ -61,6 +62,36 @@ export default async function RootLayout({
             {!isAdmin && <Footer />}
           </CartProvider>
         </AuthProvider>
+
+        {/* Yandex Metrica — skip for admin to avoid polluting stats */}
+        {!isAdmin && (
+          <>
+            <Script
+              id="yandex-metrica"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+(function(m,e,t,r,i,k,a){
+  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+  m[i].l=1*new Date();
+  for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}
+  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+})(window,document,'script','https://mc.yandex.ru/metrika/tag.js?id=109430774','ym');
+ym(109430774,'init',{ssr:true,webvisor:true,clickmap:true,ecommerce:"dataLayer",referrer:document.referrer,url:location.href,accurateTrackBounce:true,trackLinks:true});
+                `,
+              }}
+            />
+            <noscript>
+              <div>
+                <img
+                  src="https://mc.yandex.ru/watch/109430774"
+                  style={{ position: 'absolute', left: '-9999px' }}
+                  alt=""
+                />
+              </div>
+            </noscript>
+          </>
+        )}
       </body>
     </html>
   );
