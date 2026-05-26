@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminGetOne, adminUpdate } from '@/lib/admin-api';
+import { adminGetOne, adminUpdate, adminGetAll } from '@/lib/admin-api';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import type { OrderStatus } from '@/lib/types';
+import type { OrderStatus, SalesRep } from '@/lib/types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -62,6 +62,8 @@ interface OrderDraft {
   deliveryCost: number;
   items: EditableItem[];
   comment: string;
+  repId: string;
+  repName: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -82,6 +84,8 @@ function orderToDraft(order: Record<string, unknown>): OrderDraft {
     paymentMethod:  (order.paymentMethod  as string)      ?? 'card',
     deliveryCost:   (order.deliveryCost   as number)      ?? 0,
     comment:        (order.comment        as string)      ?? '',
+    repId:          (order.repId          as string)      ?? '',
+    repName:        (order.repName        as string)      ?? '',
     customer: {
       firstName: c.firstName ?? '', lastName:   c.lastName  ?? '',
       phone:     c.phone     ?? '', email:      c.email     ?? '',
@@ -104,6 +108,7 @@ function orderToDraft(order: Record<string, unknown>): OrderDraft {
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order,   setOrder]   = useState<Record<string, unknown> | null>(null);
+  const [reps,    setReps]    = useState<SalesRep[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft,   setDraft]   = useState<OrderDraft | null>(null);
@@ -111,9 +116,14 @@ export default function OrderDetailPage() {
   const [saved,   setSaved]   = useState(false);
 
   useEffect(() => {
-    adminGetOne('orders', id)
-      .then((data) => { if (data) setOrder(data); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      adminGetOne('orders', id),
+      adminGetAll('sales_reps', { orderBy: 'createdAt', dir: 'asc' }),
+    ]).then(([data, repDocs]) => {
+      if (data) setOrder(data);
+      setReps(repDocs as unknown as SalesRep[]);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [id]);
 
   const startEdit = () => {
@@ -129,6 +139,7 @@ export default function OrderDetailPage() {
     setSaving(true);
     const totalPrice = draft.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
     const grandTotal = totalPrice + draft.deliveryCost;
+    const selectedRep = reps.find((r) => r.docId === draft.repId);
     const payload = {
       status:         draft.status,
       deliveryMethod: draft.deliveryMethod,
@@ -138,6 +149,8 @@ export default function OrderDetailPage() {
       grandTotal,
       comment:        draft.comment,
       customer:       draft.customer,
+      repId:          draft.repId   || null,
+      repName:        selectedRep?.name ?? draft.repName ?? '',
       items: draft.items.map((i) => ({
         productName: i.productName,
         weight:      i.weight,
@@ -351,6 +364,19 @@ export default function OrderDetailPage() {
                   onChange={(e) => setDraft((d) => d ? { ...d, deliveryCost: parseFloat(e.target.value) || 0 } : d)}
                   className={inp} />
               </div>
+              {reps.length > 0 && (
+                <div>
+                  <label className="block font-heading text-[10px] uppercase tracking-wide text-espresso/40 mb-1">Продавец</label>
+                  <select
+                    value={draft!.repId}
+                    onChange={(e) => setDraft((d) => d ? { ...d, repId: e.target.value } : d)}
+                    className={inp}
+                  >
+                    <option value="">— Прямая продажа</option>
+                    {reps.map((r) => <option key={r.docId} value={r.docId}>{r.name}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           ) : (
             <dl className="space-y-2 font-body text-sm">
@@ -381,6 +407,12 @@ export default function OrderDetailPage() {
                 <dt className="text-espresso/50">Оплата</dt>
                 <dd className="text-espresso">{PAYMENT_LABEL[order.paymentMethod as string] ?? order.paymentMethod as string}</dd>
               </div>
+              {(order.repName as string) && (
+                <div className="flex justify-between">
+                  <dt className="text-espresso/50">Продавец</dt>
+                  <dd className="font-heading font-bold text-espresso text-xs">{order.repName as string}</dd>
+                </div>
+              )}
             </dl>
           )}
         </div>

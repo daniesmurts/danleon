@@ -140,6 +140,11 @@ export default function AdminOrdersPage() {
                             офлайн
                           </span>
                         )}
+                        {order.repName && (
+                          <span className="font-heading text-xs uppercase tracking-wide bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                            {order.repName as string}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3 font-body text-espresso/70 text-xs">
