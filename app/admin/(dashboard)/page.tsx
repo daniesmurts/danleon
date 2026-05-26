@@ -140,7 +140,7 @@ export default function AdminOrdersPage() {
                             офлайн
                           </span>
                         )}
-                        {order.repName && (
+                        {(order.repName as string) && (
                           <span className="font-heading text-xs uppercase tracking-wide bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
                             {order.repName as string}
                           </span>

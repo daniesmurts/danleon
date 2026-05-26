@@ -3,8 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
+import { fetchInventoryStatus, isPackSizeInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
 
 interface ProductCardProps {
   product: Product;
@@ -20,6 +22,29 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const hasVariants = !isCoffee && product.variants && product.variants.length > 1;
   const needsSelection = isCoffee || hasVariants;
 
+  const [inventoryStatus, setInventoryStatus] = useState<InventoryStatusMap>({});
+  useEffect(() => {
+    fetchInventoryStatus().then(setInventoryStatus).catch(() => {});
+  }, []);
+
+  // For coffee: all three standard sizes; for non-coffee variants: check each variant's grams
+  const coffeePackSizes = [250, 500, 1000];
+  const variantGrams = product.variants?.map((v) => v.grams) ?? [];
+  const checkSizes = isCoffee ? coffeePackSizes : variantGrams;
+
+  // Has any tracked pack size → use inventory; otherwise fall back to Sanity inStock
+  const hasTrackedSizes = checkSizes.some((g) => String(g) in inventoryStatus);
+  const allOutOfStock = hasTrackedSizes
+    ? checkSizes.every((g) => !isPackSizeInStock(inventoryStatus, g))
+    : !product.inStock;
+
+  // For single-SKU non-coffee: check if it's OOS
+  const singleSkuOos = !isCoffee && !hasVariants
+    ? (product.variants?.[0]?.grams
+        ? !isPackSizeInStock(inventoryStatus, product.variants[0].grams)
+        : !product.inStock)
+    : false;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     if (needsSelection) {
@@ -27,7 +52,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       router.push(`/catalog/${product.id}`);
       return;
     }
-    // Single-SKU non-coffee product — add directly
+    // Single-SKU non-coffee product — add directly (even as pre-order)
     const variant = product.variants?.[0];
     const price = variant?.price ?? product.price;
     const weight = variant?.grams ?? product.weight;
@@ -55,9 +80,14 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 9.75h18M3 4.5h18M4.5 19.5h15" />
             </svg>
           )}
-          {product.badge && (
+          {product.badge && !allOutOfStock && (
             <div className="absolute top-3 right-3 bg-crimson text-white text-[9px] font-heading font-bold uppercase tracking-[0.1em] px-2 py-1">
               {product.badge}
+            </div>
+          )}
+          {allOutOfStock && (
+            <div className="absolute top-3 left-3 bg-espresso/80 text-cream text-[9px] font-heading font-bold uppercase tracking-[0.1em] px-2 py-1">
+              ПРЕДЗАКАЗ
             </div>
           )}
         </div>
@@ -92,9 +122,17 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       <div className="p-6 pt-0 mt-auto">
         <button
           onClick={handleAddToCart}
-          className="w-full bg-crimson hover:bg-crimson-dark text-white font-heading font-bold text-sm tracking-[0.15em] uppercase py-3 transition-colors"
+          className={`w-full font-heading font-bold text-sm tracking-[0.15em] uppercase py-3 transition-colors ${
+            allOutOfStock || singleSkuOos
+              ? 'border-2 border-espresso text-espresso hover:bg-espresso hover:text-white'
+              : 'bg-crimson hover:bg-crimson-dark text-white'
+          }`}
         >
-          {needsSelection ? 'ВЫБРАТЬ' : 'В КОРЗИНУ'}
+          {allOutOfStock || singleSkuOos
+            ? 'ПРЕДЗАКАЗ'
+            : needsSelection
+              ? 'ВЫБРАТЬ'
+              : 'В КОРЗИНУ'}
         </button>
       </div>
     </div>

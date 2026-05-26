@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
+import { fetchInventoryStatus, isPackSizeInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
 
 const WEIGHT_OPTIONS = [
   { value: '250',  label: '250Г', multiplier: 1,   priceField: null,         subPriceField: null                    },
@@ -20,9 +21,22 @@ export default function ProductInteractive({ product }: { product: Product }) {
   const [weight, setWeight] = useState('250');
   const [variantIdx, setVariantIdx] = useState(0);
   const [isAdded, setIsAdded] = useState(false);
+  const [inventoryStatus, setInventoryStatus] = useState<InventoryStatusMap>({});
+
+  useEffect(() => {
+    fetchInventoryStatus().then(setInventoryStatus).catch(() => {});
+  }, []);
 
   const selectedWeight = WEIGHT_OPTIONS.find((w) => w.value === weight)!;
   const selectedVariant = hasVariants ? product.variants![variantIdx] : null;
+
+  // Stock helpers
+  const weightInStock = (grams: number) => isPackSizeInStock(inventoryStatus, grams);
+  const selectedWeightInStock = isCoffee
+    ? weightInStock(parseInt(weight))
+    : selectedVariant
+      ? weightInStock(selectedVariant.grams)
+      : true;
 
   // Price resolution:
   // 1. Non-coffee with variants → use variant price
@@ -130,17 +144,32 @@ export default function ProductInteractive({ product }: { product: Product }) {
         <div className="mb-10">
           <span className="block text-xs font-heading tracking-wide text-espresso/50 uppercase mb-3">ВЕС (НЕТТО)</span>
           <div className="flex flex-wrap gap-2">
-            {WEIGHT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => setWeight(opt.value)}
-                className={`px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
-                  weight === opt.value ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+            {WEIGHT_OPTIONS.map((opt) => {
+              const inStock = weightInStock(parseInt(opt.value));
+              const isSelected = weight === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setWeight(opt.value)}
+                  className={`relative px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
+                    isSelected
+                      ? inStock
+                        ? 'border-espresso bg-espresso text-white'
+                        : 'border-espresso/40 bg-espresso/10 text-espresso'
+                      : inStock
+                        ? 'border-espresso/20 text-espresso hover:border-espresso'
+                        : 'border-espresso/10 text-espresso/30 hover:border-espresso/30'
+                  }`}
+                >
+                  {opt.label}
+                  {!inStock && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-espresso/30 text-white text-[7px] font-heading font-bold uppercase tracking-wide px-1 py-px leading-tight">
+                      нет
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -150,31 +179,62 @@ export default function ProductInteractive({ product }: { product: Product }) {
         <div className="mb-10">
           <span className="block text-xs font-heading tracking-wide text-espresso/50 uppercase mb-3">ОБЪЁМ</span>
           <div className="flex flex-wrap gap-2">
-            {product.variants!.map((v, i) => (
-              <button
-                key={i}
-                onClick={() => setVariantIdx(i)}
-                className={`px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
-                  variantIdx === i ? 'border-espresso bg-espresso text-white' : 'border-espresso/20 text-espresso hover:border-espresso'
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
+            {product.variants!.map((v, i) => {
+              const inStock = weightInStock(v.grams);
+              const isSelected = variantIdx === i;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setVariantIdx(i)}
+                  className={`relative px-4 py-3 text-xs font-heading font-bold uppercase tracking-wide border transition-colors ${
+                    isSelected
+                      ? inStock
+                        ? 'border-espresso bg-espresso text-white'
+                        : 'border-espresso/40 bg-espresso/10 text-espresso'
+                      : inStock
+                        ? 'border-espresso/20 text-espresso hover:border-espresso'
+                        : 'border-espresso/10 text-espresso/30 hover:border-espresso/30'
+                  }`}
+                >
+                  {v.label}
+                  {!inStock && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-espresso/30 text-white text-[7px] font-heading font-bold uppercase tracking-wide px-1 py-px leading-tight">
+                      нет
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* Actions */}
 
+      {/* Pre-order notice */}
+      {!selectedWeightInStock && (
+        <div className="mb-4 border border-espresso/20 bg-[#F9F9F9] px-4 py-3 flex items-start gap-3">
+          <svg className="w-4 h-4 text-espresso/50 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <p className="font-body text-xs text-espresso/60 leading-relaxed">
+            Этот формат временно отсутствует. Оформите предзаказ — мы свяжемся с вами, как только появится в наличии.
+          </p>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={handleAddToCart}
           className={`flex-1 px-8 py-4 font-heading font-bold tracking-widest uppercase text-xs transition-all ${
-            isAdded ? 'bg-green-700 text-white border border-green-700' : 'bg-espresso text-white hover:bg-espresso/90'
+            isAdded
+              ? 'bg-green-700 text-white border border-green-700'
+              : selectedWeightInStock
+                ? 'bg-espresso text-white hover:bg-espresso/90'
+                : 'border-2 border-espresso text-espresso hover:bg-espresso hover:text-white'
           }`}
         >
-          {isAdded ? 'ДОБАВЛЕНО' : 'В КОРЗИНУ'}
+          {isAdded ? 'ДОБАВЛЕНО' : selectedWeightInStock ? 'В КОРЗИНУ' : 'ПРЕДЗАКАЗ'}
         </button>
         <button className="flex-1 px-8 py-4 font-heading font-bold tracking-widest uppercase text-xs border border-espresso text-espresso hover:bg-[#F9F9F9] transition-colors">
           ПОДПИСАТЬСЯ
