@@ -10,6 +10,15 @@ function fmt(n: number) {
   return (n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
 }
 
+/** Show 2 decimal places for kg, whole number otherwise */
+function fmtStock(stock: number, unit: string): string {
+  const u = unit.toLowerCase().trim();
+  if (u === 'кг' || u === 'кг.') {
+    return stock.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return stock.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+}
+
 export default function AdminInventoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +66,10 @@ export default function AdminInventoryPage() {
   };
 
   const handleAdjust = async (row: Row) => {
-    const d = parseInt(delta, 10);
+    const d = parseFloat(delta);
     if (isNaN(d)) return;
     setSaving(true);
-    const updated = { ...row, stock: Math.max(0, row.stock + d) };
+    const updated = { ...row, stock: Math.max(0, Math.round((row.stock + d) * 1000) / 1000) };
     await saveRow(updated);
     setRows((prev) => prev.map((r) => r.docId === row.docId ? updated : r));
     setAdjusting(null);
@@ -131,7 +140,7 @@ export default function AdminInventoryPage() {
       docId,
       name: newName.trim(),
       unit: newUnit,
-      stock: parseInt(newStock, 10) || 0,
+      stock: parseFloat(newStock) || 0,
       price: parseFloat(newPrice) || 0,
       costPrice: parseFloat(newCostPrice) || 0,
       threshold: parseInt(newThreshold, 10) || 10,
@@ -166,6 +175,17 @@ export default function AdminInventoryPage() {
   const totalValue = rows.reduce((s, r) => s + r.stock * (r.price || 0), 0);
   const totalUnits = rows.reduce((s, r) => s + r.stock, 0);
 
+  // Total kg of coffee (rows with unit = кг)
+  const totalKg = rows
+    .filter((r) => r.unit.toLowerCase().trim() === 'кг' || r.unit.toLowerCase().trim() === 'кг.')
+    .reduce((s, r) => s + r.stock, 0);
+
+  // Total packs across all kg-based rows that have packSize
+  const totalPacks = rows.reduce((s, r) => {
+    const count = packCount(r);
+    return count !== null ? s + count : s;
+  }, 0);
+
   if (loading) return (
     <div className="flex justify-center py-20">
       <div className="w-5 h-5 border-2 border-espresso/20 border-t-espresso rounded-full animate-spin" />
@@ -186,17 +206,32 @@ export default function AdminInventoryPage() {
 
       {/* Summary cards */}
       {rows.length > 0 && (
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div className="bg-white border border-cream/40 p-4">
             <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">Позиций</p>
             <p className="font-heading font-black text-xl text-espresso">{rows.length}</p>
           </div>
           <div className="bg-white border border-cream/40 p-4">
-            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">Единиц на складе</p>
-            <p className="font-heading font-black text-xl text-espresso">{totalUnits}</p>
+            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">Остаток кофе</p>
+            <p className="font-heading font-black text-xl text-espresso">
+              {fmtStock(totalKg, 'кг')} кг
+            </p>
+            <p className="font-heading text-xs text-espresso/40 mt-0.5">{totalPacks} упаковок</p>
           </div>
           <div className="bg-white border border-cream/40 p-4">
-            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">Потенциальная выручка</p>
+            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">По фасовкам</p>
+            <div className="space-y-0.5 mt-0.5">
+              {rows.filter((r) => packCount(r) !== null).map((r) => (
+                <p key={r.docId} className="font-heading text-xs text-espresso">
+                  <span className="text-espresso/40">{r.packSize}г —</span>{' '}
+                  <span className="font-bold">{packCount(r)} уп.</span>
+                  <span className="text-espresso/40 ml-1">({fmtStock(r.stock, r.unit)} кг)</span>
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white border border-cream/40 p-4">
+            <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">Потенц. выручка</p>
             <p className="font-heading font-black text-xl text-espresso">{fmt(totalValue)}</p>
           </div>
         </div>
@@ -341,9 +376,9 @@ export default function AdminInventoryPage() {
                   <td className="px-4 py-3 text-right">
                     {adjusting === row.docId ? (
                       <div className="flex items-center gap-2 justify-end">
-                        <span className="font-body text-xs text-espresso/50">{row.stock}</span>
-                        <input type="number" value={delta} onChange={(e) => setDelta(e.target.value)}
-                          placeholder="+10 или -5"
+                        <span className="font-body text-xs text-espresso/50">{fmtStock(row.stock, row.unit)} {row.unit}</span>
+                        <input type="number" step="0.001" value={delta} onChange={(e) => setDelta(e.target.value)}
+                          placeholder="+0.25 или -1"
                           className="w-24 border border-espresso/20 px-2 py-1 font-body text-sm text-center focus:border-espresso outline-none"
                           autoFocus onKeyDown={(e) => e.key === 'Enter' && handleAdjust(row)} />
                         <button onClick={() => handleAdjust(row)} disabled={saving}
@@ -354,7 +389,7 @@ export default function AdminInventoryPage() {
                     ) : (
                       <button onClick={() => setAdjusting(row.docId)}
                         className={`font-heading font-bold text-sm ${stockColor(row)} hover:opacity-70 transition-opacity`}>
-                        {row.stock} {row.unit}
+                        {fmtStock(row.stock, row.unit)} {row.unit}
                         {row.stock === 0 && <span className="ml-2 font-heading text-xs uppercase tracking-wide bg-red-100 text-red-600 px-1.5 py-0.5 rounded">нет</span>}
                         {row.stock > 0 && row.stock <= (row.threshold || 10) && <span className="ml-2 font-heading text-xs uppercase tracking-wide bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">мало</span>}
                       </button>

@@ -113,6 +113,31 @@ export async function POST(req: NextRequest) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    // Decrement inventory when order is paid
+    if (orderStatus === 'paid') {
+      try {
+        const invSnap = await db.collection('inventory').get();
+        for (const item of (orderData.items ?? [])) {
+          const packSizeG = item.weight as number;       // grams per bag (250 / 500 / 1000)
+          const quantity  = (item.quantity as number) ?? 1;
+          if (!packSizeG) continue;
+
+          const invDoc = invSnap.docs.find((d) => d.data().packSize === packSizeG);
+          if (!invDoc) continue;
+
+          const currentStock = (invDoc.data().stock as number) ?? 0;
+          const deductKg     = (packSizeG * quantity) / 1000;
+          // Round to 3 decimal places to avoid floating-point drift
+          const newStock     = Math.max(0, Math.round((currentStock - deductKg) * 1000) / 1000);
+
+          await invDoc.ref.update({ stock: newStock, updatedAt: FieldValue.serverTimestamp() });
+        }
+      } catch (invErr) {
+        console.error('TBank webhook: inventory decrement failed:', invErr);
+        // Non-fatal — order is still marked paid
+      }
+    }
+
     // Fire-and-forget notifications
     if (orderStatus === 'paid') {
       notifyAdminNewOrder({
