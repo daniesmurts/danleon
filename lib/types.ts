@@ -144,7 +144,9 @@ export interface RepAllocation {
   docId: string;
   repId: string;
   repName: string;
-  packSize: number;   // grams (250 / 500 / 1000)
+  productId?: string;    // Sanity product ID
+  productName?: string;  // display name
+  packSize: number;      // grams (250 / 500 / 1000)
   kg: number;
   date: string;
   note?: string;
