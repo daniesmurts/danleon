@@ -19,9 +19,18 @@ function fmtStock(stock: number, unit: string): string {
   return stock.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
 }
 
+interface ReconcileLine {
+  docId: string; name: string; packSize: number;
+  currentStock: number; soldKg: number; newStock: number;
+  orderCount: number; changed: boolean;
+}
+
 export default function AdminInventoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reconcileLines, setReconcileLines] = useState<ReconcileLine[] | null>(null);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileApplied, setReconcileApplied] = useState(false);
   const [adjusting, setAdjusting] = useState<string | null>(null);
   const [delta, setDelta] = useState('');
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
@@ -157,6 +166,35 @@ export default function AdminInventoryPage() {
     setRows((prev) => prev.filter((r) => r.docId !== docId));
   };
 
+  const handleReconcilePreview = async () => {
+    setReconciling(true);
+    setReconcileApplied(false);
+    try {
+      const res = await fetch('/api/admin/reconcile-inventory');
+      const data = await res.json();
+      setReconcileLines(data.lines);
+    } finally {
+      setReconciling(false);
+    }
+  };
+
+  const handleReconcileApply = async () => {
+    setReconciling(true);
+    try {
+      const res = await fetch('/api/admin/reconcile-inventory', { method: 'POST' });
+      const data = await res.json();
+      // Update local rows with new stock values
+      setRows((prev) => prev.map((r) => {
+        const updated = data.lines.find((l: ReconcileLine) => l.docId === r.docId);
+        return updated ? { ...r, stock: updated.newStock } : r;
+      }));
+      setReconcileApplied(true);
+      setReconcileLines(data.lines);
+    } finally {
+      setReconciling(false);
+    }
+  };
+
   const packCount = (row: Row): number | null => {
     if (!row.packSize || !row.stock) return null;
     const u = (row.unit || '').toLowerCase().trim();
@@ -196,13 +234,70 @@ export default function AdminInventoryPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-heading text-2xl font-black tracking-wide text-espresso uppercase">Остатки</h1>
-        <button
-          onClick={() => setAdding((v) => !v)}
-          className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-espresso/90 transition-colors"
-        >
-          + Добавить SKU
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleReconcilePreview}
+            disabled={reconciling}
+            className="border border-espresso/30 text-espresso font-heading font-bold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-espresso/5 disabled:opacity-50 transition-colors"
+          >
+            {reconciling ? 'Считаю…' : '↺ Пересчитать по заказам'}
+          </button>
+          <button
+            onClick={() => setAdding((v) => !v)}
+            className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2.5 hover:bg-espresso/90 transition-colors"
+          >
+            + Добавить SKU
+          </button>
+        </div>
       </div>
+
+      {/* Reconciliation preview panel */}
+      {reconcileLines && (
+        <div className={`border p-5 mb-4 ${reconcileApplied ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="font-heading font-bold text-sm uppercase tracking-wide text-espresso mb-3">
+                {reconcileApplied ? '✓ Остатки обновлены' : 'Сверка по оплаченным заказам'}
+              </p>
+              <div className="space-y-2">
+                {reconcileLines.map((line) => (
+                  <div key={line.docId} className="flex items-center gap-6 font-body text-sm">
+                    <span className="text-espresso font-bold w-32">{line.name}</span>
+                    <span className="text-espresso/50">
+                      Продано: <span className="font-bold text-espresso">{line.soldKg.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} кг</span>
+                      {' '}({Math.round((line.soldKg * 1000) / line.packSize)} уп. из {line.orderCount} заказов)
+                    </span>
+                    <span className="text-espresso/40">
+                      {line.currentStock.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} кг
+                      {' '}→{' '}
+                      <span className={`font-bold ${line.changed ? 'text-espresso' : 'text-espresso/40'}`}>
+                        {line.newStock.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} кг
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {!reconcileApplied && reconcileLines.some((l) => l.changed) && (
+                <button
+                  onClick={handleReconcileApply}
+                  disabled={reconciling}
+                  className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2 hover:bg-espresso/90 disabled:opacity-50 transition-colors"
+                >
+                  {reconciling ? 'Применяю…' : 'Применить'}
+                </button>
+              )}
+              <button
+                onClick={() => { setReconcileLines(null); setReconcileApplied(false); }}
+                className="text-espresso/30 hover:text-espresso text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary cards */}
       {rows.length > 0 && (
