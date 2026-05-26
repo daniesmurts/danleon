@@ -132,6 +132,25 @@ export interface Purchase {
   createdAt?: { seconds: number } | unknown;
 }
 
+export interface SalesRep {
+  docId: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+}
+
+export interface RepAllocation {
+  docId: string;
+  repId: string;
+  repName: string;
+  packSize: number;   // grams (250 / 500 / 1000)
+  kg: number;
+  date: string;
+  note?: string;
+  createdAt?: { seconds: number } | unknown;
+}
+
 export type OrderSource = 'online' | 'offline';
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded';
 

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminCreate } from '@/lib/admin-api';
+import { adminCreate, adminGetAll } from '@/lib/admin-api';
 import { getAllProducts } from '@/lib/sanity';
 import Link from 'next/link';
-import type { Product } from '@/lib/types';
+import type { Product, SalesRep } from '@/lib/types';
 
 const PAYMENT_LABEL: Record<string, string> = {
   cash: 'Наличные',
@@ -28,8 +28,10 @@ function generateOfflineId() {
 export default function NewOfflineOrderPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
+  const [reps, setReps] = useState<SalesRep[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [repId, setRepId] = useState('');
 
   // Customer
   const [firstName, setFirstName] = useState('');
@@ -49,6 +51,9 @@ export default function NewOfflineOrderPage() {
 
   useEffect(() => {
     getAllProducts().then(setProducts);
+    adminGetAll('sales_reps', { orderBy: 'createdAt', dir: 'asc' })
+      .then((docs) => setReps(docs as unknown as SalesRep[]))
+      .catch(() => {});
   }, []);
 
   const updateItem = (index: number, field: keyof LineItem, value: string | number) => {
@@ -88,11 +93,13 @@ export default function NewOfflineOrderPage() {
     setSaving(true);
     setError('');
     try {
+      const selectedRep = reps.find((r) => r.docId === repId);
       await adminCreate('orders', {
         orderId: generateOfflineId(),
         source: 'offline',
         status,
         paymentMethod,
+        ...(repId ? { repId, repName: selectedRep?.name ?? '' } : {}),
         customer: { firstName, lastName, phone, email, city: '', street: '', house: '', apartment: '', postalCode: '' },
         items: items.map((item) => ({
           productName: item.productName,
@@ -239,6 +246,16 @@ export default function NewOfflineOrderPage() {
         {/* Payment & Status */}
         <div className="bg-white border border-cream/40 p-6 space-y-4">
           <h2 className="font-heading text-xs font-bold tracking-widest uppercase text-espresso">Оплата</h2>
+          {reps.length > 0 && (
+            <div>
+              <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Продавец</label>
+              <select value={repId} onChange={(e) => setRepId(e.target.value)}
+                className="w-full border border-espresso/20 px-3 py-2 font-body text-sm focus:border-espresso outline-none bg-white">
+                <option value="">— Прямая продажа (без продавца)</option>
+                {reps.map((r) => <option key={r.docId} value={r.docId}>{r.name}</option>)}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Способ оплаты</label>

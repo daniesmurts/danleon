@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
-const ALLOWED = ['orders', 'purchases', 'inventory', 'batches', 'subscriptions'];
+const ALLOWED = ['orders', 'purchases', 'inventory', 'batches', 'subscriptions', 'sales_reps', 'rep_allocations'];
 
 function checkAuth(req: NextRequest) {
   return req.cookies.get('admin_auth')?.value === process.env.ADMIN_PASSWORD;
