@@ -5,6 +5,7 @@ import { adminGetAll, adminSet, adminDeleteDoc } from '@/lib/admin-api';
 import type { InventoryItem } from '@/lib/types';
 
 type Row = InventoryItem;
+type ProductOption = { id: string; name: string };
 
 function fmt(n: number) {
   return (n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
@@ -27,6 +28,7 @@ interface ReconcileLine {
 
 export default function AdminInventoryPage() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [reconcileLines, setReconcileLines] = useState<ReconcileLine[] | null>(null);
   const [reconciling, setReconciling] = useState(false);
@@ -43,6 +45,9 @@ export default function AdminInventoryPage() {
   const [unitInput, setUnitInput] = useState('');
   const [editingPackSize, setEditingPackSize] = useState<string | null>(null);
   const [packSizeInput, setPackSizeInput] = useState('');
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productIdInput, setProductIdInput] = useState('');
+  const [newProductId, setNewProductId] = useState('');
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
@@ -53,6 +58,7 @@ export default function AdminInventoryPage() {
   const [newThreshold, setNewThreshold] = useState('10');
 
   useEffect(() => {
+    // Load inventory rows
     adminGetAll('inventory')
       .then((docs) => {
         const data = docs.map((d) => ({ price: 0, ...d } as unknown as Row)).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
@@ -60,6 +66,12 @@ export default function AdminInventoryPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    // Load product list for the product-link dropdown (separate so failures don't block the table)
+    fetch('/api/admin/products')
+      .then((r) => r.ok ? r.json() : [])
+      .then((prods: ProductOption[]) => setProducts(prods))
+      .catch(() => {});
   }, []);
 
   const saveRow = async (row: Row) => {
@@ -70,8 +82,20 @@ export default function AdminInventoryPage() {
       threshold: row.threshold,
       price: row.price,
       costPrice: row.costPrice ?? 0,
-      ...(row.packSize ? { packSize: row.packSize } : {}),
+      ...(row.packSize  ? { packSize:  row.packSize  } : {}),
+      ...(row.productId ? { productId: row.productId } : {}),
     });
+  };
+
+  const handleSaveProductId = async (row: Row) => {
+    const productId = productIdInput || undefined;
+    const updated = { ...row, productId };
+    setSaving(true);
+    await saveRow(updated);
+    setRows((prev) => prev.map((r) => r.docId === row.docId ? updated : r));
+    setEditingProductId(null);
+    setProductIdInput('');
+    setSaving(false);
   };
 
   const handleAdjust = async (row: Row) => {
@@ -153,10 +177,11 @@ export default function AdminInventoryPage() {
       price: parseFloat(newPrice) || 0,
       costPrice: parseFloat(newCostPrice) || 0,
       threshold: parseInt(newThreshold, 10) || 10,
+      ...(newProductId ? { productId: newProductId } : {}),
     };
     await saveRow(item);
     setRows((prev) => [...prev, item].sort((a, b) => a.name.localeCompare(b.name, 'ru')));
-    setNewName(''); setNewUnit('уп.'); setNewStock(''); setNewPrice(''); setNewCostPrice(''); setNewThreshold('10');
+    setNewName(''); setNewUnit('уп.'); setNewStock(''); setNewPrice(''); setNewCostPrice(''); setNewThreshold('10'); setNewProductId('');
     setAdding(false);
     setSaving(false);
   };
@@ -370,6 +395,14 @@ export default function AdminInventoryPage() {
             <input type="number" value={newThreshold} onChange={(e) => setNewThreshold(e.target.value)}
               className="border border-espresso/20 px-3 py-1.5 font-body text-sm focus:border-espresso outline-none w-24 text-center" placeholder="10" />
           </div>
+          <div>
+            <label className="block font-heading text-xs uppercase tracking-wide text-espresso/50 mb-1">Продукт</label>
+            <select value={newProductId} onChange={(e) => setNewProductId(e.target.value)}
+              className="border border-espresso/20 px-3 py-1.5 font-body text-sm focus:border-espresso outline-none bg-white w-44">
+              <option value="">— не привязан</option>
+              {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
           <button onClick={handleAdd} disabled={saving || !newName.trim()}
             className="bg-espresso text-cream font-heading font-bold text-xs uppercase tracking-wide px-4 py-2 hover:bg-espresso/90 disabled:opacity-50 transition-colors">
             Добавить
@@ -401,6 +434,7 @@ export default function AdminInventoryPage() {
                 <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden md:table-cell">Потенц. выручка</th>
                 <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden lg:table-cell">Фасовка (г)</th>
                 <th className="text-right px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden lg:table-cell">Упаковок</th>
+                <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden xl:table-cell">Продукт</th>
                 <th className="text-left px-4 py-3 font-heading text-xs tracking-wide text-espresso/50 uppercase hidden md:table-cell">Порог</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -595,6 +629,36 @@ export default function AdminInventoryPage() {
                     })()}
                   </td>
 
+                  {/* Product link */}
+                  <td className="px-4 py-3 hidden xl:table-cell">
+                    {editingProductId === row.docId ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={productIdInput}
+                          onChange={(e) => setProductIdInput(e.target.value)}
+                          className="border border-espresso/20 px-2 py-1 font-body text-xs focus:border-espresso outline-none bg-white w-36"
+                          autoFocus
+                        >
+                          <option value="">— не привязан</option>
+                          {products.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                        </select>
+                        <button onClick={() => handleSaveProductId(row)} disabled={saving}
+                          className="font-heading text-xs uppercase tracking-wide bg-espresso text-cream px-2 py-1 hover:bg-espresso/90 disabled:opacity-50">Ок</button>
+                        <button onClick={() => { setEditingProductId(null); setProductIdInput(''); }}
+                          className="text-espresso/40 hover:text-espresso text-base leading-none">×</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditingProductId(row.docId); setProductIdInput(row.productId ?? ''); }}
+                        className="font-body text-xs text-espresso/50 hover:text-espresso transition-colors text-left"
+                      >
+                        {row.productId
+                          ? <span className="bg-espresso/10 text-espresso px-1.5 py-0.5 font-heading text-[10px] uppercase tracking-wide">{products.find((p) => p.id === row.productId)?.name ?? row.productId}</span>
+                          : <span className="text-espresso/20 font-heading text-xs uppercase tracking-wide">— задать</span>}
+                      </button>
+                    )}
+                  </td>
+
                   <td className="px-4 py-3.5 font-body text-espresso/40 text-xs hidden md:table-cell">{row.threshold}</td>
 
                   <td className="px-4 py-3 text-right">
@@ -617,6 +681,8 @@ export default function AdminInventoryPage() {
                 <td className="hidden lg:table-cell" />
                 <td className="hidden lg:table-cell" />
                 <td className="px-4 py-3 text-right text-sm text-espresso hidden md:table-cell">{fmt(totalValue)}</td>
+                <td className="hidden lg:table-cell" />
+                <td className="hidden lg:table-cell" />
                 <td colSpan={2} className="hidden md:table-cell" />
               </tr>
             </tbody>
