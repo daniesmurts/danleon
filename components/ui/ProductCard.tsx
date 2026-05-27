@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
-import { fetchInventoryStatus, isPackSizeInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
+import { fetchInventoryStatus, isInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
 
 interface ProductCardProps {
   product: Product;
@@ -27,21 +27,20 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     fetchInventoryStatus().then(setInventoryStatus).catch(() => {});
   }, []);
 
-  // For coffee: all three standard sizes; for non-coffee variants: check each variant's grams
+  // For coffee: check all three standard sizes; for non-coffee: check each variant's grams
   const coffeePackSizes = [250, 500, 1000];
   const variantGrams = product.variants?.map((v) => v.grams) ?? [];
   const checkSizes = isCoffee ? coffeePackSizes : variantGrams;
 
-  // Has any tracked pack size → use inventory; otherwise fall back to Sanity inStock
-  const hasTrackedSizes = checkSizes.some((g) => String(g) in inventoryStatus);
-  const allOutOfStock = hasTrackedSizes
-    ? checkSizes.every((g) => !isPackSizeInStock(inventoryStatus, g))
-    : !product.inStock;
+  // All tracked sizes out-of-stock → show pre-order badge & button
+  // status === null means still loading/error → default to in-stock (never block on failure)
+  const allOutOfStock = inventoryStatus !== null
+    && checkSizes.every((g) => !isInStock(inventoryStatus, product.id, g));
 
-  // For single-SKU non-coffee: check if it's OOS
-  const singleSkuOos = !isCoffee && !hasVariants
+  // Single-SKU non-coffee OOS
+  const singleSkuOos = !isCoffee && !hasVariants && inventoryStatus !== null
     ? (product.variants?.[0]?.grams
-        ? !isPackSizeInStock(inventoryStatus, product.variants[0].grams)
+        ? !isInStock(inventoryStatus, product.id, product.variants[0].grams)
         : !product.inStock)
     : false;
 

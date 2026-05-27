@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Product } from '@/lib/types';
 import { useCart } from '@/lib/cart-context';
 import { useAuth } from '@/lib/auth-context';
-import { fetchInventoryStatus, isPackSizeInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
+import { fetchInventoryStatus, isInStock, type InventoryStatusMap } from '@/lib/inventory-status-client';
 
 const WEIGHT_OPTIONS = [
   { value: '250',  label: '250Г', multiplier: 1,   priceField: null,         subPriceField: null                    },
@@ -30,8 +30,8 @@ export default function ProductInteractive({ product }: { product: Product }) {
   const selectedWeight = WEIGHT_OPTIONS.find((w) => w.value === weight)!;
   const selectedVariant = hasVariants ? product.variants![variantIdx] : null;
 
-  // Stock helpers
-  const weightInStock = (grams: number) => isPackSizeInStock(inventoryStatus, grams);
+  // Stock helpers — keyed by product.id + packSize
+  const weightInStock = (grams: number) => isInStock(inventoryStatus, product.id, grams);
   const selectedWeightInStock = isCoffee
     ? weightInStock(parseInt(weight))
     : selectedVariant

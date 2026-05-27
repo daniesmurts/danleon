@@ -110,6 +110,7 @@ export interface InventoryItem {
   price: number;
   costPrice?: number;
   packSize?: number;   // grams per pack — used to compute pack count from kg stock
+  productId?: string;  // Sanity product slug — links this row to a catalog product
   updatedAt?: { seconds: number };
 }
 

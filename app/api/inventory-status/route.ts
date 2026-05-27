@@ -1,55 +1,56 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
-export interface PackSizeStatus {
-  stock: number;
-  packs: number;
+export interface StockEntry {
+  stock: number;   // raw stock in the item's unit (e.g. kg)
+  packs: number;   // computed pack count
   inStock: boolean;
 }
 
-/** Public endpoint — no auth required.
- *  Returns pack-size (grams) → stock status map for the frontend shop.
- *  Aggregates all inventory rows that have a packSize set.
+/**
+ * Public GET /api/inventory-status
+ *
+ * Returns a flat map keyed by  "<productId>:<packSize>"
+ * e.g. { "premium:250": { stock: 11, packs: 44, inStock: true }, ... }
+ *
+ * Only rows that have BOTH productId and packSize are included.
+ * The frontend treats "no entry for a given product+size" as pre-order.
  */
 export async function GET() {
   try {
     const db = adminDb();
     const snap = await db.collection('inventory').get();
 
-    const result: Record<string, PackSizeStatus> = {};
+    const result: Record<string, StockEntry> = {};
 
     snap.docs.forEach((doc) => {
-      const data = doc.data();
-      const packSize = data.packSize as number | undefined;
-      if (!packSize) return;
+      const d = doc.data();
+      const productId = d.productId as string | undefined;
+      const packSize  = d.packSize  as number | undefined;
 
-      const stock = (data.stock as number) ?? 0;
-      const unit = ((data.unit as string) || '').toLowerCase().trim();
+      // Skip rows not linked to a product
+      if (!productId || !packSize) return;
 
-      // Convert stock to grams
-      const stockGrams =
+      const stock = (d.stock as number) ?? 0;
+      const unit  = ((d.unit as string) || '').toLowerCase().trim();
+
+      // Convert stored stock to grams so we can count packs
+      const stockG =
         unit === 'кг' || unit === 'кг.' ? stock * 1000
         : unit === 'г' || unit === 'гр' || unit === 'г.' ? stock
-        : 0;
+        : stock * packSize; // fallback: treat as pack count already
 
-      const packs = stockGrams > 0 ? Math.floor(stockGrams / packSize) : 0;
+      const packs = stockG > 0 ? Math.floor(stockG / packSize) : 0;
 
-      const key = String(packSize);
-      if (result[key]) {
-        result[key].stock += stock;
-        result[key].packs += packs;
-        result[key].inStock = result[key].packs > 0;
-      } else {
-        result[key] = { stock, packs, inStock: packs > 0 };
-      }
+      result[`${productId}:${packSize}`] = { stock, packs, inStock: packs > 0 };
     });
 
     return NextResponse.json(result, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
+      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
     });
   } catch (err) {
     console.error('[inventory-status]', err);
-    // On error: return empty map — shop stays open, no false OOS
+    // On error return empty — shop stays open, no false OOS shown
     return NextResponse.json({});
   }
 }
