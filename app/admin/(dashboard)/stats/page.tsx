@@ -93,7 +93,15 @@ export default function AdminStatsPage() {
   const batchCost      = batchItems.reduce((s, i) => s + effectiveCostActual(i), 0);
   const purchasesTotal = purchases.reduce((s, p) => s + (p.grandTotal || 0), 0);
   const totalCosts     = batchCost + purchasesTotal;
-  const inventoryValue = inventory.reduce((s, i) => s + i.stock * (i.price || 0), 0);
+  const inventoryValue = inventory.reduce((s, i) => {
+    if (i.packSize && i.stock) {
+      const u = (i.unit || '').toLowerCase().trim();
+      const grams = (u === 'кг' || u === 'кг.') ? i.stock * 1000
+                  : (u === 'г' || u === 'гр' || u === 'г.') ? i.stock : null;
+      if (grams !== null) return s + Math.round(grams / i.packSize) * (i.price || 0);
+    }
+    return s + i.stock * (i.price || 0);
+  }, 0);
   const totalPotential = totalRevenue + inventoryValue;   // sold + still on shelf
   const profitActual   = totalRevenue  - totalCosts;
   const profitFull     = totalPotential - totalCosts;     // if all inventory sells

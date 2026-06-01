@@ -106,6 +106,7 @@ export interface InventoryItem {
   name: string;
   unit: string;
   stock: number;
+  initialStock?: number; // stock at time of first entry — used to compute sold packs
   threshold: number;
   price: number;
   costPrice?: number;

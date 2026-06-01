@@ -47,6 +47,8 @@ export default function AdminInventoryPage() {
   const [packSizeInput, setPackSizeInput] = useState('');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productIdInput, setProductIdInput] = useState('');
+  const [editingInitialStock, setEditingInitialStock] = useState<string | null>(null);
+  const [initialStockInput, setInitialStockInput] = useState('');
   const [newProductId, setNewProductId] = useState('');
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -82,8 +84,9 @@ export default function AdminInventoryPage() {
       threshold: row.threshold,
       price: row.price,
       costPrice: row.costPrice ?? 0,
-      ...(row.packSize  ? { packSize:  row.packSize  } : {}),
-      ...(row.productId ? { productId: row.productId } : {}),
+      ...(row.packSize     ? { packSize:     row.packSize     } : {}),
+      ...(row.productId    ? { productId:    row.productId    } : {}),
+      ...(row.initialStock !== undefined ? { initialStock: row.initialStock } : {}),
     });
   };
 
@@ -95,6 +98,18 @@ export default function AdminInventoryPage() {
     setRows((prev) => prev.map((r) => r.docId === row.docId ? updated : r));
     setEditingProductId(null);
     setProductIdInput('');
+    setSaving(false);
+  };
+
+  const handleSaveInitialStock = async (row: Row) => {
+    const initialStock = parseFloat(initialStockInput);
+    if (isNaN(initialStock)) return;
+    const updated = { ...row, initialStock };
+    setSaving(true);
+    await saveRow(updated);
+    setRows((prev) => prev.map((r) => r.docId === row.docId ? updated : r));
+    setEditingInitialStock(null);
+    setInitialStockInput('');
     setSaving(false);
   };
 
@@ -169,11 +184,13 @@ export default function AdminInventoryPage() {
     if (!newName.trim()) return;
     setSaving(true);
     const docId = Date.now().toString();
+    const initialStock = parseFloat(newStock) || 0;
     const item: Row = {
       docId,
       name: newName.trim(),
       unit: newUnit,
-      stock: parseFloat(newStock) || 0,
+      stock: initialStock,
+      initialStock,          // seed so we can compute sold packs from day one
       price: parseFloat(newPrice) || 0,
       costPrice: parseFloat(newCostPrice) || 0,
       threshold: parseInt(newThreshold, 10) || 10,
@@ -235,7 +252,13 @@ export default function AdminInventoryPage() {
     return 'text-green-600';
   };
 
-  const totalValue = rows.reduce((s, r) => s + r.stock * (r.price || 0), 0);
+  /** Pack-aware revenue: use pack count × price when packSize is set, else stock × price */
+  const rowRevenue = (row: Row) => {
+    const count = packCount(row);
+    return (count !== null ? count : row.stock) * (row.price || 0);
+  };
+
+  const totalValue = rows.reduce((s, r) => s + rowRevenue(r), 0);
   const totalUnits = rows.reduce((s, r) => s + r.stock, 0);
 
   // Total kg of coffee (rows with unit = кг)
@@ -340,14 +363,42 @@ export default function AdminInventoryPage() {
           </div>
           <div className="bg-white border border-cream/40 p-4">
             <p className="font-heading text-xs uppercase tracking-wide text-espresso/40 mb-1">По фасовкам</p>
-            <div className="space-y-0.5 mt-0.5">
-              {rows.filter((r) => packCount(r) !== null).map((r) => (
-                <p key={r.docId} className="font-heading text-xs text-espresso">
-                  <span className="text-espresso/40">{r.packSize}г —</span>{' '}
-                  <span className="font-bold">{packCount(r)} уп.</span>
-                  <span className="text-espresso/40 ml-1">({fmtStock(r.stock, r.unit)} кг)</span>
-                </p>
-              ))}
+            <div className="space-y-1.5 mt-0.5">
+              {rows.filter((r) => packCount(r) !== null).map((r) => {
+                const remaining = packCount(r)!;
+                const initialPacks = r.initialStock !== undefined && r.packSize
+                  ? (() => {
+                      const u = (r.unit || '').toLowerCase().trim();
+                      const g = (u === 'кг' || u === 'кг.') ? r.initialStock! * 1000
+                              : (u === 'г' || u === 'гр' || u === 'г.') ? r.initialStock! : null;
+                      return g !== null ? Math.round(g / r.packSize) : null;
+                    })()
+                  : null;
+                const sold = initialPacks !== null ? Math.max(0, initialPacks - remaining) : null;
+                const pct  = initialPacks ? Math.round((remaining / initialPacks) * 100) : null;
+                return (
+                  <div key={r.docId}>
+                    <div className="flex items-baseline justify-between mb-0.5">
+                      <span className="font-heading text-xs text-espresso/40">{r.name}</span>
+                      <span className="font-heading text-xs font-bold text-espresso">
+                        {remaining} уп.
+                        {initialPacks !== null && <span className="font-normal text-espresso/35"> / {initialPacks}</span>}
+                      </span>
+                    </div>
+                    {pct !== null && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1 bg-cream/60 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${pct > 50 ? 'bg-green-400' : pct > 20 ? 'bg-yellow-400' : 'bg-crimson'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="font-heading text-[10px] text-espresso/30 shrink-0">−{sold}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="bg-white border border-cream/40 p-4">
@@ -586,7 +637,7 @@ export default function AdminInventoryPage() {
                   {/* Potential revenue */}
                   <td className="px-4 py-3 text-right hidden md:table-cell">
                     {row.price > 0 ? (
-                      <span className="font-heading font-bold text-sm text-espresso">{fmt(row.stock * row.price)}</span>
+                      <span className="font-heading font-bold text-sm text-espresso">{fmt(rowRevenue(row))}</span>
                     ) : (
                       <span className="font-body text-espresso/20 text-xs">—</span>
                     )}
@@ -619,13 +670,77 @@ export default function AdminInventoryPage() {
                     )}
                   </td>
 
-                  {/* Pack count */}
-                  <td className="px-4 py-3 text-right hidden lg:table-cell">
+                  {/* Pack count — remaining / initial + sold bar */}
+                  <td className="px-4 py-3 hidden lg:table-cell min-w-[140px]">
                     {(() => {
-                      const count = packCount(row);
-                      return count !== null
-                        ? <span className="font-heading font-bold text-sm text-espresso">{count} уп.</span>
-                        : <span className="text-espresso/20 text-xs">—</span>;
+                      const remaining = packCount(row);
+                      if (remaining === null) return <span className="text-espresso/20 text-xs">—</span>;
+
+                      const toInitialPacks = (kg: number) =>
+                        row.packSize ? (() => {
+                          const u = (row.unit || '').toLowerCase().trim();
+                          const g = (u === 'кг' || u === 'кг.') ? kg * 1000
+                                  : (u === 'г' || u === 'гр' || u === 'г.') ? kg : null;
+                          return g !== null ? Math.round(g / row.packSize) : null;
+                        })() : null;
+
+                      const initialPacks = row.initialStock !== undefined ? toInitialPacks(row.initialStock) : null;
+                      const sold = initialPacks !== null ? Math.max(0, initialPacks - remaining) : null;
+                      const pct  = initialPacks ? Math.round((remaining / initialPacks) * 100) : null;
+
+                      // Inline editor for initialStock
+                      if (editingInitialStock === row.docId) {
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="number" step="0.001" value={initialStockInput}
+                              onChange={(e) => setInitialStockInput(e.target.value)}
+                              className="w-20 border border-espresso/20 px-2 py-1 font-body text-sm text-center focus:border-espresso outline-none"
+                              autoFocus placeholder={String(row.stock)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveInitialStock(row);
+                                if (e.key === 'Escape') { setEditingInitialStock(null); setInitialStockInput(''); }
+                              }}
+                            />
+                            <span className="font-body text-xs text-espresso/40">{row.unit}</span>
+                            <button onClick={() => handleSaveInitialStock(row)} disabled={saving}
+                              className="font-heading text-xs uppercase bg-espresso text-cream px-2 py-1 hover:bg-espresso/90 disabled:opacity-50">Ок</button>
+                            <button onClick={() => { setEditingInitialStock(null); setInitialStockInput(''); }}
+                              className="text-espresso/40 hover:text-espresso text-base leading-none">×</button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div>
+                          <div className="flex items-baseline gap-1 mb-1">
+                            <span className="font-heading font-bold text-sm text-espresso">{remaining} уп.</span>
+                            {initialPacks !== null
+                              ? <span className="font-heading text-xs text-espresso/35">/ {initialPacks}</span>
+                              : <button
+                                  onClick={() => { setEditingInitialStock(row.docId); setInitialStockInput(String(row.stock)); }}
+                                  className="font-heading text-[10px] uppercase tracking-wide text-espresso/30 hover:text-crimson transition-colors ml-1"
+                                  title="Задать начальный запас"
+                                >
+                                  + нач.
+                                </button>
+                            }
+                          </div>
+                          {pct !== null && (
+                            <>
+                              <div className="h-1.5 bg-cream/60 rounded-full overflow-hidden w-full mb-0.5">
+                                <div
+                                  className={`h-full rounded-full transition-all ${pct > 50 ? 'bg-green-400' : pct > 20 ? 'bg-yellow-400' : 'bg-crimson'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <span className="font-heading text-[10px] text-espresso/35 uppercase tracking-wide">
+                                −{sold} продано · {pct}%
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      );
                     })()}
                   </td>
 
