@@ -252,9 +252,15 @@ export default function ContactPage() {
                   </h4>
                   <a
                     href="tel:+79179040998"
-                    className="font-body text-espresso/70 hover:text-crimson transition-colors duration-300"
+                    className="block font-body text-espresso/70 hover:text-crimson transition-colors duration-300"
                   >
                     +7 (917) 904-09-98
+                  </a>
+                  <a
+                    href="tel:+79234604210"
+                    className="block font-body text-espresso/70 hover:text-crimson transition-colors duration-300"
+                  >
+                    +7 (923) 460-42-10
                   </a>
                 </div>
               </div>

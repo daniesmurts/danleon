@@ -57,6 +57,7 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5">
               <li className="text-sm font-body">+7 917 904-09-98</li>
+              <li className="text-sm font-body">+7 923 460-42-10</li>
               <li className="text-sm font-body">daniel@boadtech.com</li>
               <li className="text-sm font-body text-cream/40 mt-4">Пн–Сб: 9:00 — 21:00</li>
             </ul>
