@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { adminGetAll } from '@/lib/admin-api';
 import type { BatchItem, InventoryItem, Purchase } from '@/lib/types';
 import Link from 'next/link';
+import SalesReportExport from '@/components/admin/SalesReportExport';
 
 function fmt(n: number) {
   return (n || 0).toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
@@ -220,6 +221,9 @@ export default function AdminStatsPage() {
           </div>
         ))}
       </div>
+
+      {/* Sales report export */}
+      <SalesReportExport orders={orders} />
 
       {/* P&L card */}
       <div className="bg-white border border-cream/40 p-6 mb-6">
