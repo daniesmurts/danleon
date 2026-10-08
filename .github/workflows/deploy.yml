@@ -3,6 +3,7 @@ name: Deploy to Yandex Cloud
 on:
   push:
     branches: [main]
+  workflow_dispatch: # allow manual trigger from GitHub UI
 
 env:
   IMAGE_NAME: danleon
